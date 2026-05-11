@@ -1,288 +1,251 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Loading...</title>
-  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@300;400;700&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loading...</title>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0916;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;font-family:'M PLUS Rounded 1c',sans-serif}
 
-    body {
-      background: #0f0a1a;
-      font-family: 'M PLUS Rounded 1c', sans-serif;
-      overflow: hidden;
-      height: 100vh;
-    }
+/* ── Starfield ── */
+.stars{position:fixed;inset:0;pointer-events:none}
+@keyframes twinkle{0%,100%{opacity:0;transform:scale(.5)}50%{opacity:1;transform:scale(1)}}
 
-    /* ── Stars BG ── */
-    .stars { position: fixed; inset: 0; pointer-events: none; }
-    .star {
-      position: absolute; border-radius: 50%;
-      background: #fff; opacity: 0;
-      animation: twinkle var(--d, 3s) ease-in-out var(--delay, 0s) infinite;
-    }
-    @keyframes twinkle {
-      0%,100% { opacity: 0; transform: scale(0.6); }
-      50%      { opacity: var(--op, 0.6); transform: scale(1); }
-    }
+/* ── Loader overlay ── */
+.overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;z-index:10;transition:opacity .9s,visibility .9s}
+.overlay.gone{opacity:0;visibility:hidden}
 
-    /* ── Full overlay ── */
-    .loader-overlay {
-      position: fixed; inset: 0;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 0;
-      z-index: 100;
-      transition: opacity 0.9s ease, visibility 0.9s;
-    }
-    .loader-overlay.hidden { opacity: 0; visibility: hidden; }
+/* ── Scene card ── */
+.scene{display:flex;flex-direction:column;align-items:center;gap:0}
 
-    /* ── Ground / scene ── */
-    .scene {
-      position: relative;
-      display: flex; flex-direction: column;
-      align-items: center;
-    }
+/* ── SVG character animations ── */
 
-    /* ── Glow blob under character ── */
-    .glow-blob {
-      position: absolute;
-      bottom: -10px;
-      width: 160px; height: 40px;
-      background: radial-gradient(ellipse, rgba(232,121,249,0.3), transparent 70%);
-      border-radius: 50%;
-      filter: blur(12px);
-      animation: blob-pulse 2s ease-in-out infinite;
-    }
-    @keyframes blob-pulse {
-      0%,100% { transform: scaleX(1); opacity: 0.6; }
-      50%      { transform: scaleX(1.15); opacity: 1; }
-    }
+/* Whole body float */
+.body-float{animation:float 3.2s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes float{0%,100%{transform:translateY(0) rotate(-.5deg)}40%{transform:translateY(-12px) rotate(.8deg)}70%{transform:translateY(-6px) rotate(-.3deg)}}
 
-    /* ── Character image ── */
-    .char-wrap {
-      position: relative;
-      width: 220px;
-      animation: float 3.2s ease-in-out infinite;
-    }
-    @keyframes float {
-      0%,100% { transform: translateY(0px) rotate(-0.5deg); }
-      30%      { transform: translateY(-12px) rotate(0.5deg); }
-      60%      { transform: translateY(-6px) rotate(-0.3deg); }
-    }
+/* Hair sways AFTER body with slight delay */
+.hair-sway{animation:float 3.2s ease-in-out .18s infinite;transform-origin:50% 0}
+@keyframes hairsway{0%,100%{transform:rotate(-1.5deg)}50%{transform:rotate(2deg)}}
 
-    .char-img {
-      width: 100%;
-      filter: drop-shadow(0 8px 24px rgba(232,121,249,0.4));
-    }
+/* Eye blink - top eyelid drops */
+.eyelid-l,.eyelid-r{transform-origin:50% 0;animation:blink 4.5s ease-in-out infinite}
+.eyelid-r{animation-delay:.06s}
+@keyframes blink{0%,88%,100%{transform:scaleY(0)}91%,96%{transform:scaleY(1)}99%{transform:scaleY(.1)}}
 
-    /* Sleep Z's floating from character */
-    .zzz {
-      position: absolute;
-      top: 10px; right: 0px;
-      font-size: 18px;
-      font-weight: 700;
-      color: #e879f9;
-      opacity: 0;
-      animation: zzz-float 3s ease-in-out infinite;
-    }
-    .zzz:nth-child(2) { font-size: 13px; top: 28px; right: -16px; animation-delay: 0.8s; }
-    .zzz:nth-child(3) { font-size: 9px;  top: 44px; right: -28px; animation-delay: 1.6s; }
-    @keyframes zzz-float {
-      0%   { opacity: 0; transform: translate(0,0) rotate(-5deg); }
-      20%  { opacity: 0.9; }
-      100% { opacity: 0; transform: translate(12px,-28px) rotate(10deg); }
-    }
+/* Leg swing - opposite phase */
+.leg-l{transform-origin:84px 0;animation:swing-l 2.2s ease-in-out infinite}
+.leg-r{transform-origin:116px 0;animation:swing-r 2.2s ease-in-out infinite}
+@keyframes swing-l{0%,100%{transform:rotate(-14deg)}50%{transform:rotate(16deg)}}
+@keyframes swing-r{0%,100%{transform:rotate(16deg)}50%{transform:rotate(-14deg)}}
 
-    /* ── Speech bubble ── */
-    .bubble {
-      position: absolute;
-      top: -52px; left: 50%;
-      transform: translateX(-10%);
-      background: white;
-      border-radius: 16px;
-      padding: 6px 14px;
-      font-size: 13px;
-      font-weight: 700;
-      color: #333;
-      white-space: nowrap;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-      animation: bubble-appear 0.4s ease forwards, bubble-bob 2.5s ease-in-out 0.5s infinite;
-      opacity: 0;
-    }
-    .bubble::after {
-      content: '';
-      position: absolute;
-      bottom: -8px; left: 20px;
-      border: 8px solid transparent;
-      border-top-color: white;
-      border-bottom: none;
-    }
-    @keyframes bubble-appear {
-      to { opacity: 1; }
-    }
-    @keyframes bubble-bob {
-      0%,100% { transform: translateX(-10%) translateY(0); }
-      50%      { transform: translateX(-10%) translateY(-4px); }
-    }
+/* Breathing - chest subtle scale */
+.body-shape{animation:breathe 3.2s ease-in-out infinite;transform-origin:50% 40%}
+@keyframes breathe{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.025)}}
 
-    /* ── Progress bar section ── */
-    .progress-section {
-      margin-top: 24px;
-      display: flex; flex-direction: column;
-      align-items: center; gap: 10px;
-      width: 260px;
-    }
+/* Yawn sequence every 8s */
+.mouth-smile{animation:mouth-hide 8s ease-in-out infinite;transform-origin:50% 50%}
+@keyframes mouth-hide{0%,58%,90%,100%{transform:scaleY(1);opacity:1}62%,85%{transform:scaleY(0);opacity:0}}
+.mouth-yawn{opacity:0;animation:yawn-show 8s ease-in-out infinite;transform-origin:50% 50%}
+@keyframes yawn-show{0%,58%,90%,100%{transform:scale(0);opacity:0}63%,84%{transform:scale(1);opacity:1}}
 
-    .progress-track {
-      width: 100%; height: 6px;
-      background: rgba(255,255,255,0.08);
-      border-radius: 6px; overflow: hidden;
-      position: relative;
-    }
-    @keyframes progress-run {
-      0%   { width: 0%; }
-      20%  { width: 18%; }
-      40%  { width: 35%; }
-      55%  { width: 55%; }
-      70%  { width: 68%; }
-      85%  { width: 82%; }
-      100% { width: 100%; }
-    }
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #818cf8, #e879f9, #38bdf8);
-      border-radius: 6px;
-      animation: progress-run 3s cubic-bezier(0.4,0,0.2,1) forwards;
-    }
-    /* shimmer */
-    .progress-fill::after {
-      content: '';
-      position: absolute; inset: 0;
-      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%);
-      animation: shimmer 1.2s linear infinite;
-    }
-    @keyframes shimmer {
-      0%   { transform: translateX(-100%); }
-      100% { transform: translateX(400%); }
-    }
+/* Arm raise during yawn */
+.arm-l-g{transform-origin:68px 175px;animation:arm-up 8s ease-in-out infinite}
+@keyframes arm-up{0%,58%,92%,100%{transform:rotate(0)}65%,83%{transform:rotate(-55deg)}}
 
-    /* dots */
-    .dots { display: flex; gap: 6px; }
-    .dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      animation: dot-hop 1.4s ease-in-out infinite;
-    }
-    .dot:nth-child(1) { background: #818cf8; }
-    .dot:nth-child(2) { background: #e879f9; animation-delay: 0.2s; }
-    .dot:nth-child(3) { background: #38bdf8; animation-delay: 0.4s; }
-    @keyframes dot-hop {
-      0%,80%,100% { transform: translateY(0); }
-      40%          { transform: translateY(-7px); }
-    }
+/* Blush pulse */
+.blush{animation:blush-pulse 3.2s ease-in-out infinite}
+@keyframes blush-pulse{0%,100%{opacity:.55}50%{opacity:.8}}
 
-    .load-text {
-      font-size: 0.7rem; letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: #444;
-    }
+/* Z floats */
+.z1{animation:z-up 2.8s ease-out 0s infinite}
+.z2{animation:z-up 2.8s ease-out .9s infinite}
+.z3{animation:z-up 2.8s ease-out 1.8s infinite}
+@keyframes z-up{0%{opacity:0;transform:translate(0,0) scale(.5)}15%{opacity:1}100%{opacity:0;transform:translate(18px,-52px) scale(1)}}
 
-    /* page content */
-    .page-content {
-      height: 100vh; display: flex;
-      align-items: center; justify-content: center;
-      color: #555; font-family: 'M PLUS Rounded 1c', sans-serif;
-      font-size: 1.1rem; letter-spacing: 0.06em;
-    }
-  </style>
+/* ── Progress bar ── */
+.bar-wrap{width:220px;position:relative}
+.bar-track{height:8px;background:rgba(255,255,255,.08);border-radius:8px;overflow:hidden}
+.bar-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,#818cf8,#e879f9,#38bdf8);animation:fill-up 3.4s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes fill-up{0%{width:0%}100%{width:100%}}
+.bar-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:shimmer 1.2s linear infinite}
+@keyframes shimmer{from{transform:translateX(-200%)}to{transform:translateX(300%)}}
+
+/* dots */
+.dots{display:flex;gap:7px;justify-content:center;margin-top:10px}
+.dot{width:7px;height:7px;border-radius:50%;animation:hop 1.3s ease-in-out infinite}
+.dot:nth-child(1){background:#818cf8}
+.dot:nth-child(2){background:#e879f9;animation-delay:.22s}
+.dot:nth-child(3){background:#38bdf8;animation-delay:.44s}
+@keyframes hop{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-8px)}}
+
+/* bubble text cycle */
+.bubble-box{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(8px);border-radius:12px;padding:6px 16px;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#888;margin-top:6px;min-width:180px;text-align:center;transition:opacity .35s}
+</style>
 </head>
 <body>
 
-  <!-- Starfield -->
-  <div class="stars" id="stars"></div>
+<!-- Stars -->
+<div class="stars" id="stars"></div>
 
-  <!-- Loader -->
-  <div class="loader-overlay" id="loader">
-    <div class="scene">
-      <div class="glow-blob"></div>
+<div class="overlay" id="loader">
+<div class="scene">
 
-      <div class="char-wrap">
-        <!-- Speech bubble -->
-        <div class="bubble" id="bubble">もうちょっと待って… 😪</div>
+<!-- CHARACTER SVG -->
+<svg width="210" height="310" viewBox="0 0 200 295" xmlns="http://www.w3.org/2000/svg" overflow="visible">
 
-        <!-- Z Z Z -->
-        <span class="zzz">Z</span>
-        <span class="zzz">z</span>
-        <span class="zzz">z</span>
+  <!-- Z Z Z -->
+  <text class="z1" x="155" y="50" font-size="20" fill="#a78bfa" font-weight="900" font-family="Arial">Z</text>
+  <text class="z2" x="172" y="32" font-size="14" fill="#c4b5fd" font-weight="900" font-family="Arial">z</text>
+  <text class="z3" x="185" y="18" font-size="10" fill="#ddd6fe" font-weight="900" font-family="Arial">z</text>
 
-        <!-- AI Generated Character -->
-        <img class="char-img" src="anime_girl.png" alt="Loading character">
-      </div>
+  <!-- ── BODY GROUP (floats) ── -->
+  <g class="body-float">
 
-      <div class="progress-section">
-        <div class="progress-track">
-          <div class="progress-fill"></div>
-        </div>
-        <div class="dots">
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-        </div>
-        <span class="load-text">Loading...</span>
-      </div>
-    </div>
+    <!-- Back hair -->
+    <ellipse class="hair-sway" cx="100" cy="88" rx="52" ry="60" fill="#3b1f6b"/>
+    <!-- Side hair pieces (sway) -->
+    <ellipse class="hair-sway" cx="52" cy="118" rx="13" ry="26" fill="#3b1f6b" transform="rotate(-12,52,118)"/>
+    <ellipse class="hair-sway" cx="148" cy="118" rx="13" ry="26" fill="#3b1f6b" transform="rotate(12,148,118)"/>
+
+    <!-- HEAD -->
+    <ellipse cx="100" cy="94" rx="46" ry="48" fill="#ffe8d0"/>
+
+    <!-- Front bangs -->
+    <path class="hair-sway" d="M54,82 Q62,42 100,37 Q138,42 146,82 Q132,64 115,68 Q100,56 85,68 Q68,64 54,82Z" fill="#3b1f6b"/>
+
+    <!-- Ear -->
+    <ellipse cx="54" cy="100" rx="9" ry="11" fill="#fdd0b0"/>
+    <ellipse cx="146" cy="100" rx="9" ry="11" fill="#fdd0b0"/>
+
+    <!-- ── EYES ── -->
+    <!-- Left eye white -->
+    <ellipse cx="83" cy="99" rx="13" ry="15" fill="white"/>
+    <!-- Left iris -->
+    <ellipse cx="83" cy="101" rx="10" ry="12" fill="#7c52bb"/>
+    <!-- Left pupil -->
+    <ellipse cx="83" cy="102" rx="6" ry="7" fill="#1e0f3a"/>
+    <!-- Left shine 1 -->
+    <ellipse cx="79" cy="97" rx="3" ry="3" fill="white"/>
+    <!-- Left shine 2 small -->
+    <ellipse cx="88" cy="106" rx="1.5" ry="1.5" fill="rgba(255,255,255,.7)"/>
+    <!-- Left eyelash line -->
+    <path d="M70,94 Q83,86 96,94" stroke="#1e0f3a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <!-- Left eyelid (blink) -->
+    <ellipse class="eyelid-l" cx="83" cy="94" rx="13" ry="15" fill="#ffe8d0"/>
+
+    <!-- Right eye white -->
+    <ellipse cx="117" cy="99" rx="13" ry="15" fill="white"/>
+    <!-- Right iris -->
+    <ellipse cx="117" cy="101" rx="10" ry="12" fill="#7c52bb"/>
+    <!-- Right pupil -->
+    <ellipse cx="117" cy="102" rx="6" ry="7" fill="#1e0f3a"/>
+    <!-- Right shine 1 -->
+    <ellipse cx="113" cy="97" rx="3" ry="3" fill="white"/>
+    <ellipse cx="122" cy="106" rx="1.5" ry="1.5" fill="rgba(255,255,255,.7)"/>
+    <!-- Right eyelash line -->
+    <path d="M104,94 Q117,86 130,94" stroke="#1e0f3a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <!-- Right eyelid (blink) -->
+    <ellipse class="eyelid-r" cx="117" cy="94" rx="13" ry="15" fill="#ffe8d0"/>
+
+    <!-- Nose -->
+    <ellipse cx="100" cy="115" rx="4" ry="3" fill="#f0b898"/>
+
+    <!-- Mouth smile (hides during yawn) -->
+    <path class="mouth-smile" d="M88,125 Q100,133 112,125" stroke="#c47066" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <!-- Mouth yawn (big open circle, appears during yawn) -->
+    <g class="mouth-yawn">
+      <ellipse cx="100" cy="128" rx="13" ry="15" fill="#b05050"/>
+      <ellipse cx="100" cy="131" rx="9" ry="8" fill="#1e0f3a"/>
+      <rect x="94" y="121" width="12" height="5" rx="2" fill="#f8d0c0"/>
+    </g>
+
+    <!-- Blush -->
+    <ellipse class="blush" cx="68" cy="118" rx="14" ry="9" fill="#ffb5c8" opacity=".55"/>
+    <ellipse class="blush" cx="132" cy="118" rx="14" ry="9" fill="#ffb5c8" opacity=".55"/>
+
+    <!-- ── BODY / HOODIE ── -->
+    <g class="body-shape">
+      <path d="M62,155 Q48,175 52,230 L148,230 Q152,175 138,155 Q122,146 100,146 Q78,146 62,155Z" fill="#9b72cf"/>
+      <!-- Hoodie pocket -->
+      <rect x="80" y="195" width="40" height="26" rx="9" fill="#8560b8"/>
+      <!-- Hoodie drawstrings -->
+      <line x1="93" y1="163" x2="89" y2="192" stroke="#7a50a8" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="107" y1="163" x2="111" y2="192" stroke="#7a50a8" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+
+    <!-- ── LEFT ARM ── -->
+    <g class="arm-l-g">
+      <path d="M62,155 Q38,168 32,202 Q30,213 39,217 Q49,221 53,208 Q61,182 72,167Z" fill="#9b72cf"/>
+      <ellipse cx="36" cy="219" rx="11" ry="10" fill="#ffe8d0"/>
+    </g>
+
+    <!-- RIGHT ARM (static, holds phone) -->
+    <path d="M138,155 Q162,168 168,202 Q170,213 161,217 Q151,221 147,208 Q139,182 128,167Z" fill="#9b72cf"/>
+    <ellipse cx="164" cy="219" rx="11" ry="10" fill="#ffe8d0"/>
+    <!-- Phone in right hand -->
+    <rect x="155" y="222" width="18" height="26" rx="4" fill="#1e0f3a"/>
+    <rect x="157" y="225" width="14" height="18" rx="2" fill="#38bdf8" opacity=".7"/>
+
+    <!-- ── LEGS (dangle & swing) ── -->
+    <g class="leg-l">
+      <rect x="71" y="230" width="24" height="55" rx="12" fill="#6a42a0"/>
+      <!-- shoe -->
+      <ellipse cx="83" cy="287" rx="18" ry="10" fill="#251650"/>
+      <ellipse cx="89" cy="285" rx="8" ry="6" fill="#3b2570"/>
+    </g>
+    <g class="leg-r">
+      <rect x="105" y="230" width="24" height="55" rx="12" fill="#6a42a0"/>
+      <!-- shoe -->
+      <ellipse cx="117" cy="287" rx="18" ry="10" fill="#251650"/>
+      <ellipse cx="123" cy="285" rx="8" ry="6" fill="#3b2570"/>
+    </g>
+
+  </g><!-- /body-float -->
+
+</svg>
+
+<!-- Progress bar (she's sitting on it visually) -->
+<div class="bar-wrap">
+  <div class="bar-track"><div class="bar-fill"></div></div>
+  <div class="dots">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
   </div>
+</div>
 
-  <!-- Page content -->
-  <div class="page-content">Content is ready ✦</div>
+<div class="bubble-box" id="bubbleTxt">Initializing…</div>
+
+</div><!-- /scene -->
+</div><!-- /overlay -->
+
+<div style="height:100vh;display:flex;align-items:center;justify-content:center;color:#333;font-size:1rem;letter-spacing:.08em">Content ready ✦</div>
 
 <script>
-  // Stars
-  const starContainer = document.getElementById('stars');
-  for (let i = 0; i < 80; i++) {
-    const s = document.createElement('div');
-    s.className = 'star';
-    const size = Math.random() * 2.5 + 1;
-    s.style.cssText = `
-      width:${size}px; height:${size}px;
-      left:${Math.random()*100}vw;
-      top:${Math.random()*100}vh;
-      --d:${(Math.random()*3+2).toFixed(1)}s;
-      --delay:${(Math.random()*5).toFixed(1)}s;
-      --op:${(Math.random()*0.5+0.2).toFixed(2)};
-    `;
-    starContainer.appendChild(s);
-  }
+// Stars
+const sc=document.getElementById('stars');
+for(let i=0;i<90;i++){
+  const s=document.createElement('div');
+  const sz=Math.random()*2.5+.8;
+  s.style.cssText=`position:absolute;border-radius:50%;width:${sz}px;height:${sz}px;background:#fff;left:${Math.random()*100}vw;top:${Math.random()*100}vh;animation:twinkle ${(Math.random()*3+2).toFixed(1)}s ease-in-out ${(Math.random()*5).toFixed(1)}s infinite`;
+  sc.appendChild(s);
+}
 
-  // Cycle speech bubble messages
-  const messages = [
-    'もうちょっと待って… 😪',
-    'Almost there~ 💤',
-    'Still loading… 🌙',
-    'One sec, okay? 🍡',
-    'Getting sleepy… 😴',
-  ];
-  const bubble = document.getElementById('bubble');
-  let msgIdx = 0;
-  setInterval(() => {
-    msgIdx = (msgIdx + 1) % messages.length;
-    bubble.style.opacity = '0';
-    bubble.style.transition = 'opacity 0.3s';
-    setTimeout(() => {
-      bubble.textContent = messages[msgIdx];
-      bubble.style.opacity = '1';
-    }, 300);
-  }, 2200);
+// Bubble messages
+const msgs=['Initializing…','Brewing magic ✨','Almost there…','Loading assets 🌙','One moment~ 💤','Getting ready 🍡'];
+let mi=0;const bb=document.getElementById('bubbleTxt');
+setInterval(()=>{
+  bb.style.opacity=0;
+  setTimeout(()=>{bb.textContent=msgs[mi=(mi+1)%msgs.length];bb.style.opacity=1;},350);
+},2400);
 
-  // Hide loader
-  const loader = document.getElementById('loader');
-  let pageReady = false, minDone = false;
-  window.addEventListener('load', () => { pageReady = true; tryHide(); });
-  setTimeout(() => { minDone = true; tryHide(); }, 3200);
-  function tryHide() {
-    if (pageReady && minDone) loader.classList.add('hidden');
-  }
+// Dismiss loader
+const ov=document.getElementById('loader');
+let rdy=false,done=false;
+window.addEventListener('load',()=>{rdy=true;go()});
+setTimeout(()=>{done=true;go()},3400);
+function go(){if(rdy&&done)ov.classList.add('gone')}
 </script>
 </body>
 </html>
