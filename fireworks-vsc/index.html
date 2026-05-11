@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Realistic Fireworks — Canvas (VSC only) + Custom Sounds</title>
+<title>🎆 Hyper-Realistic Fireworks — Interactive</title>
 <style>
   :root {
     --bg:#021018;
@@ -19,15 +19,96 @@
   .small{ font-size:12px; color:#9bd6ff; }
   footer.small { font-size:12px; color:#8ed0ff; margin-top:8px; opacity:0.9; }
   .muted{ color:#8aaec7; font-size:12px; }
+
+  /* ── Kid character overlay ── */
+  #kid-wrap {
+    position: fixed;
+    bottom: 0;
+    left: 20px;
+    width: 120px;
+    z-index: 50;
+    pointer-events: none;
+    transform-origin: bottom center;
+  }
+  #kid-img {
+    width: 100%;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+    transition: transform 0.15s ease;
+  }
+  /* Idle bob */
+  @keyframes kid-idle {
+    0%,100% { transform: translateY(0) rotate(0deg); }
+    50%      { transform: translateY(-4px) rotate(1deg); }
+  }
+  /* Shock — grab ears */
+  @keyframes kid-shock {
+    0%   { transform: translateY(-16px) rotate(-6deg) scale(1.1); }
+    30%  { transform: translateY(-22px) rotate(6deg) scale(1.15); }
+    60%  { transform: translateY(-10px) rotate(-3deg) scale(1.08); }
+    100% { transform: translateY(0) rotate(0deg) scale(1); }
+  }
+  /* KO — spin and fall */
+  @keyframes kid-ko {
+    0%   { transform: rotate(0deg) scale(1); }
+    25%  { transform: rotate(180deg) scale(1.2) translateY(-30px); }
+    50%  { transform: rotate(360deg) scale(0.9) translateY(-10px); }
+    75%  { transform: rotate(480deg) scale(1.05) translateY(-5px); }
+    100% { transform: rotate(540deg) scale(1) translateY(0); }
+  }
+  /* Stars circling over head */
+  .ko-stars {
+    position: absolute;
+    top: -24px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 16px;
+    animation: star-orbit 0.6s linear infinite;
+    display: none;
+  }
+  @keyframes star-orbit {
+    to { transform: translateX(-50%) rotate(360deg); }
+  }
+  /* Speech bubble from kid */
+  .kid-bubble {
+    position: absolute;
+    top: -50px; left: 110%;
+    background: white;
+    border-radius: 12px;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #1a1a2e;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    font-family: Inter, system-ui;
+  }
+  .kid-bubble::before {
+    content: '';
+    position: absolute;
+    left: -8px; top: 50%;
+    transform: translateY(-50%);
+    border: 8px solid transparent;
+    border-right-color: white;
+    border-left: none;
+  }
+  .kid-bubble.show { opacity: 1; }
 </style>
 </head>
 <body>
+<!-- Kid character -->
+<div id="kid-wrap">
+  <div class="ko-stars" id="koStars">⭐ 💫 ⭐</div>
+  <div class="kid-bubble" id="kidBubble">Wah! 😱</div>
+  <img id="kid-img" src="kid_character.png" alt="Kid watching fireworks">
+</div>
+
 <div id="app">
   <canvas id="c"></canvas>
 
   <aside class="ui">
-    <h3 style="margin:0 0 6px 0">Realistic Fireworks</h3>
-    <div class="small muted">Made in VS Code — click canvas to spawn. Put sounds in <code>sounds/</code>.</div>
+    <h3 style="margin:0 0 6px 0">🎆 Hyper-Realistic Fireworks</h3>
+    <div class="small muted">Click canvas to fire. Watch the kid react! 😄</div>
 
     <label>Fire Rate (per 5s)</label>
     <input id="rate" type="range" min="0" max="30" value="6"/>
@@ -119,58 +200,57 @@
   const rockets = [];
   const particles = [];
 
-  // Sound system --------------------------------------------------------
+  // ── Sound system (funny meme sounds — no inappropriate audio) ──────────
   let audioCtx = null;
   function ensureAudioCtx() {
     if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     return audioCtx;
   }
 
-  // audio elements for explosion & whistle file (if present)
-  let explosionAudioEl = null;
-  let whistleAudioEl = null;
-  let whistleAvailableAsFile = false;
-
-  function loadAudioFiles() {
-    // Explosion file - REQUIRED to play the custom explosion
-    try {
-      explosionAudioEl = new Audio("sounds/aag.mp3");
-      // don't autoplay; just pre-create
-    } catch(e){ explosionAudioEl = null; }
-
-    // Whistle file - optional
-    try {
-      whistleAudioEl = new Audio("sounds/whistle.mp3");
-      whistleAvailableAsFile = true;
-    } catch(e){ whistleAudioEl = null; whistleAvailableAsFile = false; }
-  }
-  loadAudioFiles();
-
-  // Play explosion sound (uses audio element clone so overlaps are allowed)
+  // Funny cartoon BOOM — descending pitch with reverb tail
   function playExplosion() {
-    if(explosionAudioEl) {
-      const s = explosionAudioEl.cloneNode(true);
-      s.volume = 1.0;
-      s.currentTime = 0;
-      s.play().catch(()=>{ /* user hasn't interacted; blocked */ });
-    } else {
-      // fallback to a short synthetic boom if file not present
-      try {
-        const ctx = ensureAudioCtx();
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.type = 'sawtooth';
-        o.frequency.value = 120;
-        o.connect(g);
-        g.connect(ctx.destination);
-        g.gain.value = 0.0001;
-        o.start();
-        g.gain.exponentialRampToValueAtTime(1.0, ctx.currentTime + 0.01);
-        o.frequency.exponentialRampToValueAtTime(900, ctx.currentTime + 0.18);
-        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.6);
-        o.stop(ctx.currentTime + 0.62);
-      } catch(e) { /* ignore */ }
-    }
+    try {
+      const ctx = ensureAudioCtx();
+      const now = ctx.currentTime;
+
+      // Main boom oscillator
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(rand(180,280), now);
+      o.frequency.exponentialRampToValueAtTime(rand(40,70), now + 0.35);
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.linearRampToValueAtTime(0.8, now + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(now); o.stop(now + 0.72);
+
+      // Cartoon "pop" blip on top
+      const pop = ctx.createOscillator();
+      const pg = ctx.createGain();
+      pop.type = 'square';
+      pop.frequency.setValueAtTime(rand(600,900), now);
+      pop.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+      pg.gain.setValueAtTime(0.4, now);
+      pg.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+      pop.connect(pg); pg.connect(ctx.destination);
+      pop.start(now); pop.stop(now + 0.18);
+
+      // Random: 20% chance play "woohoo" sparkle arpeggio
+      if(Math.random() < 0.2) {
+        const notes = [523, 659, 784, 1047];
+        notes.forEach((freq, i) => {
+          const n = ctx.createOscillator();
+          const ng = ctx.createGain();
+          n.type = 'sine';
+          n.frequency.value = freq;
+          ng.gain.setValueAtTime(0.25, now + i*0.06);
+          ng.gain.exponentialRampToValueAtTime(0.0001, now + i*0.06 + 0.12);
+          n.connect(ng); ng.connect(ctx.destination);
+          n.start(now + i*0.06); n.stop(now + i*0.06 + 0.15);
+        });
+      }
+    } catch(e) { /* ignore */ }
   }
 
   // Play whistle during rocket flight.
@@ -598,6 +678,88 @@
   requestAnimationFrame(loop);
   autoLaunchTick();
   setTimeout(()=>{ for(let i=0;i<6;i++){ setTimeout(()=>launchBtn.click(), i*380); } }, 300);
+
+})();
+
+// ── Kid character reaction system ──────────────────────────────────────
+(function() {
+  const kidWrap   = document.getElementById('kid-wrap');
+  const kidImg    = document.getElementById('kid-img');
+  const koStars   = document.getElementById('koStars');
+  const kidBubble = document.getElementById('kidBubble');
+
+  let recentExplosions = 0;
+  let koTimeout = null;
+  let bubbleTimeout = null;
+  let idleAnim = null;
+
+  const shockMessages = [
+    'Wah! 😱', 'Aiyaa!! 🙉', 'My ears!! 🔥',
+    'Not again!! 😭', 'Aiiii!! 💥', 'Baap re!! 👂'
+  ];
+  const koMessages = [
+    '💫 x_x 💫', 'Too many!! 😵', 'I give up!! 🌀',
+    'KO!! 💀', 'OVERLOAD!! 🤯'
+  ];
+
+  // Start idle bob animation
+  function setIdle() {
+    kidImg.style.animation = 'kid-idle 2.4s ease-in-out infinite';
+    koStars.style.display = 'none';
+  }
+  setIdle();
+
+  function showBubble(msg) {
+    kidBubble.textContent = msg;
+    kidBubble.classList.add('show');
+    clearTimeout(bubbleTimeout);
+    bubbleTimeout = setTimeout(() => kidBubble.classList.remove('show'), 1600);
+  }
+
+  function doShock() {
+    // Single firework — grab ears, jump in fright
+    kidImg.style.animation = 'none';
+    void kidImg.offsetWidth;
+    kidImg.style.animation = 'kid-shock 0.8s ease-out forwards';
+    showBubble(shockMessages[Math.floor(Math.random() * shockMessages.length)]);
+    clearTimeout(koTimeout);
+    koTimeout = setTimeout(setIdle, 900);
+  }
+
+  function doKO() {
+    // Multiple fireworks — spin, fall, circling stars
+    kidImg.style.animation = 'none';
+    void kidImg.offsetWidth;
+    kidImg.style.animation = 'kid-ko 1.2s ease-out forwards';
+    koStars.style.display = 'block';
+    showBubble(koMessages[Math.floor(Math.random() * koMessages.length)]);
+    clearTimeout(koTimeout);
+    koTimeout = setTimeout(() => { setIdle(); }, 1400);
+  }
+
+  // Intercept rocket launches to count explosions per window
+  let explosionWindow = 0;
+  const origPush = rockets.push.bind(rockets);
+  // Patch: listen to explosion events via a custom counter
+  // We hook into the global `rockets` array's length changes
+  const launchBtn2 = document.getElementById('launchBtn');
+  const canvasEl   = document.getElementById('c');
+
+  function onFireworkLaunched() {
+    explosionWindow++;
+    if (explosionWindow === 1) {
+      doShock();
+    } else if (explosionWindow >= 3) {
+      doKO();
+    }
+    clearTimeout(window._kidReset);
+    window._kidReset = setTimeout(() => { explosionWindow = 0; }, 2000);
+  }
+
+  // Observe launch button click
+  launchBtn2.addEventListener('click', onFireworkLaunched);
+  // Observe canvas click (fires a rocket)
+  canvasEl.addEventListener('pointerdown', onFireworkLaunched);
 
 })();
 </script>
