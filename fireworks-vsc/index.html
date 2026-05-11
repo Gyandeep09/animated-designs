@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Realistic Fireworks — Canvas (VSC only) + Custom Sounds</title>
+<style>
+  :root {
+    --bg:#021018;
+  }
+  html,body { height:100%; margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:var(--bg); color:#e6f7ff; }
+  #app { display:flex; height:100vh; gap:12px; align-items:stretch; padding:16px; box-sizing:border-box; }
+  canvas { display:block; width:100%; height:100%; border-radius:8px; background: linear-gradient(#00131a 0%, #021018 40%); box-shadow: 0 12px 40px rgba(0,0,0,0.6); }
+  .ui { width:360px; max-width:36vw; min-width:260px; background:rgba(255,255,255,0.04); border-radius:10px; padding:12px; box-sizing:border-box; backdrop-filter: blur(6px); }
+  label{ font-size:13px; color:#bfeaff; display:block; margin-top:8px; }
+  input[type="range"]{ width:100%; }
+  button{ margin-top:12px; padding:8px 12px; border-radius:8px; border:0; background:#7f5bd6; color:white; cursor:pointer; }
+  .controls-row{ display:flex; gap:8px; align-items:center; }
+  .small{ font-size:12px; color:#9bd6ff; }
+  footer.small { font-size:12px; color:#8ed0ff; margin-top:8px; opacity:0.9; }
+  .muted{ color:#8aaec7; font-size:12px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="c"></canvas>
+
+  <aside class="ui">
+    <h3 style="margin:0 0 6px 0">Realistic Fireworks</h3>
+    <div class="small muted">Made in VS Code — click canvas to spawn. Put sounds in <code>sounds/</code>.</div>
+
+    <label>Fire Rate (per 5s)</label>
+    <input id="rate" type="range" min="0" max="30" value="6"/>
+
+    <label>Particle Count (per explosion)</label>
+    <input id="count" type="range" min="8" max="600" value="180"/>
+
+    <label>Gravity</label>
+    <input id="grav" type="range" min="0" max="1.2" step="0.01" value="0.18"/>
+
+    <label>Wind (±)</label>
+    <input id="wind" type="range" min="-0.6" max="0.6" step="0.01" value="0.03"/>
+
+    <label>Trail Length (0-1)</label>
+    <input id="trail" type="range" min="0" max="1" step="0.01" value="0.18"/>
+
+    <label>Glow Intensity</label>
+    <input id="glow" type="range" min="0.2" max="2.0" step="0.05" value="1.0"/>
+
+    <div style="margin-top:10px" class="controls-row">
+      <button id="launchBtn">Launch Random</button>
+      <button id="clearBtn" style="background:#d65b5b">Clear</button>
+    </div>
+
+    <div style="margin-top:8px" class="controls-row">
+      <button id="recordBtn" style="background:#2b9b6f">Start Recording</button>
+      <button id="snapshotBtn" style="background:#2b6fb0">Snapshot</button>
+    </div>
+
+    <footer class="small">Click anywhere on canvas to fire at that position (desktop or mobile). Use Live Server in VSC for live edits.</footer>
+  </aside>
+</div>
+
+<script>
+/*
+  Full fireworks canvas with custom sounds:
+  - explosion sound: sounds/aag.mp3 (playExplosion)
+  - rocket whistle: sounds/whistle.mp3 if present; otherwise a synthesized whistle
+  - whistle plays during rocket ascent and stops when explosion occurs.
+  - graceful fallbacks for autoplay restrictions.
+*/
+
+(() => {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d', { alpha: true });
+  let W = canvas.width = innerWidth - 420;
+  let H = canvas.height = innerHeight - 32;
+
+  function resize() {
+    const asideWidth = document.querySelector('.ui').offsetWidth + 24;
+    W = canvas.width = Math.max(400, window.innerWidth - asideWidth - 40);
+    H = canvas.height = Math.max(300, window.innerHeight - 40);
+  }
+  addEventListener('resize', resize);
+  resize();
+
+  // UI elements
+  const rateEl = document.getElementById('rate');
+  const countEl = document.getElementById('count');
+  const gravEl = document.getElementById('grav');
+  const windEl = document.getElementById('wind');
+  const trailEl = document.getElementById('trail');
+  const glowEl = document.getElementById('glow');
+  const launchBtn = document.getElementById('launchBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const recordBtn = document.getElementById('recordBtn');
+  const snapshotBtn = document.getElementById('snapshotBtn');
+
+  // Utilities
+  const rand = (a,b) => a + Math.random()*(b-a);
+  const choose = arr => arr[Math.floor(Math.random()*arr.length)];
+  const TAU = Math.PI*2;
+
+  // Palettes
+  const palettes = [
+    ['#FFFB89','#FFB47A','#FF6B6B','#8C4BFF','#FF80D5'],
+    ['#FFDE6A','#FFD08A','#FF7CAB','#FF4D9D','#6AF1FF'],
+    ['#FFD3A5','#FF7B6D','#C85CFF','#6BE9B6','#FFF38A'],
+    ['#9CECFB','#65C7F7','#0052D4','#9B5CFF','#FF8D70'],
+    ['#FFF1A8','#FFD08A','#FF8BC1','#7A7BFF','#ACFFB3']
+  ];
+
+  // Physics params
+  let gravity = parseFloat(gravEl.value);
+  let wind = parseFloat(windEl.value);
+  let trailFade = parseFloat(trailEl.value);
+  let glowIntensity = parseFloat(glowEl.value);
+
+  const rockets = [];
+  const particles = [];
+
+  // Sound system --------------------------------------------------------
+  let audioCtx = null;
+  function ensureAudioCtx() {
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+
+  // audio elements for explosion & whistle file (if present)
+  let explosionAudioEl = null;
+  let whistleAudioEl = null;
+  let whistleAvailableAsFile = false;
+
+  function loadAudioFiles() {
+    // Explosion file - REQUIRED to play the custom explosion
+    try {
+      explosionAudioEl = new Audio("sounds/aag.mp3");
+      // don't autoplay; just pre-create
+    } catch(e){ explosionAudioEl = null; }
+
+    // Whistle file - optional
+    try {
+      whistleAudioEl = new Audio("sounds/whistle.mp3");
+      whistleAvailableAsFile = true;
+    } catch(e){ whistleAudioEl = null; whistleAvailableAsFile = false; }
+  }
+  loadAudioFiles();
+
+  // Play explosion sound (uses audio element clone so overlaps are allowed)
+  function playExplosion() {
+    if(explosionAudioEl) {
+      const s = explosionAudioEl.cloneNode(true);
+      s.volume = 1.0;
+      s.currentTime = 0;
+      s.play().catch(()=>{ /* user hasn't interacted; blocked */ });
+    } else {
+      // fallback to a short synthetic boom if file not present
+      try {
+        const ctx = ensureAudioCtx();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sawtooth';
+        o.frequency.value = 120;
+        o.connect(g);
+        g.connect(ctx.destination);
+        g.gain.value = 0.0001;
+        o.start();
+        g.gain.exponentialRampToValueAtTime(1.0, ctx.currentTime + 0.01);
+        o.frequency.exponentialRampToValueAtTime(900, ctx.currentTime + 0.18);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.6);
+        o.stop(ctx.currentTime + 0.62);
+      } catch(e) { /* ignore */ }
+    }
+  }
+
+  // Play whistle during rocket flight.
+  // Returns an object { stop: Function } to stop the whistle when rocket explodes.
+  function startWhistle() {
+    // If we have a file whistle, use a cloned audio element and loop it
+    if(whistleAudioEl && whistleAvailableAsFile) {
+      try {
+        const w = whistleAudioEl.cloneNode(true);
+        w.loop = true;
+        w.volume = 0.5;
+        w.currentTime = 0;
+        w.play().catch(()=>{ /* autoplay blocked until user interacts */ });
+        return {
+          stop: () => { try { w.pause(); w.currentTime = 0; } catch(e){} }
+        };
+      } catch(e) {
+        // fallthrough to synth fallback
+      }
+    }
+
+    // Fallback: synth whistle (WebAudio) — creates oscillator + gain and returns stop function
+    try {
+      const ctx = ensureAudioCtx();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+
+      o.type = 'sine';
+      o.frequency.value = rand(380, 620); // base whistle pitch
+      g.gain.value = 0.0001;
+
+      // slight vibrato/tremolo with LFO
+      lfo.type = 'sine';
+      lfo.frequency.value = rand(4.0, 7.0);
+      lfoGain.gain.value = rand(8, 18);
+
+      lfo.connect(lfoGain);
+      lfoGain.connect(o.frequency);
+
+      o.connect(g);
+      g.connect(ctx.destination);
+
+      o.start();
+      lfo.start();
+
+      // fade in quickly
+      g.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 0.02);
+
+      // gently increase pitch for rising whistle feel
+      const pitchUpTo = o.frequency.value * rand(1.08, 1.32);
+      o.frequency.linearRampToValueAtTime(pitchUpTo, ctx.currentTime + rand(0.9,1.8));
+
+      let stopped = false;
+      return {
+        stop: () => {
+          if(stopped) return;
+          stopped = true;
+          // fade out
+          try {
+            g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
+            setTimeout(()=>{ try { o.stop(); lfo.stop(); } catch(e){} }, 220);
+          } catch(e){
+            try { o.stop(); lfo.stop(); } catch(e) {}
+          }
+        }
+      };
+    } catch(e) {
+      return { stop: ()=>{} };
+    }
+  }
+
+  // Rocket and particle classes -----------------------------------------
+  class Rocket {
+    constructor(x, y, tx, ty, color) {
+      this.x = x; this.y = y;
+      this.tx = tx; this.ty = ty;
+      const vy = rand(-9.5, -13.5);
+      const vx = (tx - x) / rand(20,40) + rand(-1,1);
+      this.vx = vx; this.vy = vy;
+      this.color = color;
+      this.trail = [];
+      this.alive = true;
+      this.size = 3.5;
+      this.lifespan = 0;
+      this.exploded = false;
+
+      // start a whistle (returns stopper)
+      this.whistleObj = startWhistle();
+    }
+    step(delta) {
+      this.lifespan += delta;
+      this.vy += gravity * 0.03 * delta;
+      this.vx += wind * 0.01 * delta;
+      this.x += this.vx * delta;
+      this.y += this.vy * delta;
+
+      this.trail.push({x:this.x, y:this.y});
+      if(this.trail.length > 14) this.trail.shift();
+
+      const dist = (this.x - this.tx)*(this.x - this.tx) + (this.y - this.ty)*(this.y - this.ty);
+      if((this.y <= this.ty + 6 && this.vy < 0) || this.vy > 1.8 || dist < 90 || this.lifespan > 300) {
+        this.explode();
+        this.alive = false;
+      }
+    }
+    explode() {
+      // stop whistle immediately
+      try { if(this.whistleObj && typeof this.whistleObj.stop === 'function') this.whistleObj.stop(); } catch(e){}
+
+      const types = ['chrysanthemum','willow','ring','palm','fountain','burst'];
+      const type = choose(types);
+      spawnExplosion(this.x, this.y, this.color, type);
+      shake(6);
+      playExplosion();
+    }
+    render(ctx) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      const g = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, 18);
+      g.addColorStop(0, 'rgba(255,255,255,0.95)');
+      g.addColorStop(0.15, this.color);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size*1.2, 0, TAU);
+      ctx.fill();
+
+      for(let i=0;i<this.trail.length;i++){
+        const p = this.trail[i];
+        const alpha = (i+1)/this.trail.length * 0.6;
+        ctx.fillStyle = hexToRgba(this.color, alpha*0.85);
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, 2 + i*0.3, 2 + i*0.3, 0, 0, TAU);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+
+  class Particle {
+    constructor(x,y, vx, vy, life, color, size=2.5, decay=0.96, type='spark') {
+      this.x=x; this.y=y;
+      this.vx=vx; this.vy=vy;
+      this.life = life; this.maxLife = life;
+      this.color=color; this.size=size; this.decay=decay; this.type=type;
+      this.age=0; this.trail=[]; this.gravity = gravity;
+    }
+    step(delta){
+      this.age += delta;
+      this.vx += wind * 0.02 * delta;
+      this.vy += (this.gravity*0.03) * delta;
+      this.x += this.vx * delta;
+      this.y += this.vy * delta;
+
+      if(this.trail.length < 10) this.trail.push({x:this.x, y:this.y});
+      else { this.trail.shift(); this.trail.push({x:this.x,y:this.y}); }
+
+      this.size *= Math.pow(this.decay, delta*0.6);
+      this.vx *= 0.999;
+    }
+    render(ctx){
+      const t = this.age / Math.max(1,this.maxLife);
+      const alpha = Math.max(0, 1 - t) * 0.95;
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      const radius = Math.max(1, this.size*5);
+      const grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, radius);
+      grad.addColorStop(0, hexToRgba('#ffffff', Math.min(1, alpha*0.9)));
+      grad.addColorStop(0.2, hexToRgba(this.color, alpha*0.95));
+      grad.addColorStop(0.8, hexToRgba(this.color, alpha*0.18 * glowIntensity));
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, radius, 0, TAU);
+      ctx.fill();
+
+      ctx.fillStyle = hexToRgba('#fff', Math.min(1, alpha));
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, Math.max(0.6, this.size*0.35), 0, TAU);
+      ctx.fill();
+
+      for(let i=0;i<this.trail.length;i++){
+        const p = this.trail[i];
+        const fade = (i/this.trail.length) * 0.25 * alpha;
+        ctx.fillStyle = hexToRgba(this.color, fade);
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, Math.max(0.6, this.size*0.2), Math.max(0.6, this.size*0.2), 0, 0, TAU);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+  }
+
+  // Explosion spawner (same patterns as before)
+  function spawnExplosion(x,y,color,type='chrysanthemum'){
+    const baseCount = parseInt(countEl.value, 10) || 180;
+    const paletteG = choose(palettes);
+
+    function spawnMany(n, speedMin, speedMax, life, opts={}) {
+      for(let i=0;i<n;i++){
+        const angle = rand(0, TAU);
+        const speed = rand(speedMin, speedMax);
+        const vx = Math.cos(angle)*speed;
+        const vy = Math.sin(angle)*speed;
+        const c = opts.color || choose([color, choose(paletteG)]);
+        const p = new Particle(x,y, vx, vy, life, c, rand(1.2, 3.0), rand(0.94,0.988));
+        if(opts.gravityBoost) p.gravity += opts.gravityBoost;
+        particles.push(p);
+      }
+    }
+
+    switch(type){
+      case 'chrysanthemum':
+        spawnMany(baseCount, 2.2, 6.2, rand(80,160));
+        spawnMany(Math.max(8, Math.floor(baseCount*0.06)), 0.6, 2.6, rand(40,90), { color: '#fff9e8'});
+        break;
+
+      case 'willow':
+        spawnMany(baseCount*1.1, 1.6, 3.2, rand(160,300), { gravityBoost: 0.18 });
+        break;
+
+      case 'ring':
+        const rings = 1 + Math.floor(rand(0,2));
+        for(let r=0;r<rings;r++){
+          const spread = baseCount / (rings*1.0);
+          for(let i=0;i<spread;i++){
+            const ang = (i/spread)*TAU + (r*0.08);
+            const speed = rand(2.8 + r*0.5, 4.2 + r*0.5);
+            const vx = Math.cos(ang)*speed;
+            const vy = Math.sin(ang)*speed;
+            particles.push(new Particle(x,y,vx,vy,rand(80,160), choose(paletteG), rand(1.6,3.6), rand(0.96,0.993)));
+          }
+        }
+        break;
+
+      case 'palm':
+        spawnMany(16, 0.2, 1.8, rand(20,40), { color: '#fff8d3'});
+        for(let b=0;b<5;b++){
+          const ang = rand(-0.6,0.6) + (b-2)*0.18;
+          for(let i=0;i<20;i++){
+            const speed = rand(2.8,5.6) * (1 + i*0.02);
+            const vx = Math.cos(ang + i*0.01) * speed;
+            const vy = Math.sin(ang + i*0.01) * speed;
+            particles.push(new Particle(x,y,vx,vy,rand(90,180), choose(paletteG), rand(1.8,3.8), rand(0.965,0.985)));
+          }
+        }
+        break;
+
+      case 'fountain':
+        for(let i=0;i<Math.min(140, baseCount);i++){
+          const ang = rand(-1.1, -2.0) * (Math.random()<0.5?1:-1) + Math.PI/2;
+          const speed = rand(1.6,4.0);
+          const vx = Math.cos(ang) * speed;
+          const vy = Math.sin(ang) * speed;
+          particles.push(new Particle(x,y,vx,vy,rand(80,220), choose(paletteG), rand(1.2,2.8), rand(0.94,0.98)));
+        }
+        break;
+
+      case 'burst':
+      default:
+        spawnMany(baseCount, 1.8, 6.8, rand(70,140));
+        break;
+    }
+  }
+
+  // helpers
+  function hexToRgba(hex, alpha=1){
+    const h = hex.replace('#','');
+    const r = parseInt(h.substring(0,2),16);
+    const g = parseInt(h.substring(2,4),16);
+    const b = parseInt(h.substring(4,6),16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+
+  let shakeAmt = 0;
+  function shake(v=0) { shakeAmt = Math.max(shakeAmt, v); }
+
+  // Main loop -----------------------------------------------------------
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.min(40, now - last) / 16.6667;
+    last = now;
+
+    gravity = parseFloat(gravEl.value);
+    wind = parseFloat(windEl.value);
+    trailFade = parseFloat(trailEl.value);
+    glowIntensity = parseFloat(glowEl.value);
+
+    // fade for trails
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = `rgba(1,6,10,${0.12 + trailFade*0.35})`;
+    ctx.fillRect(0,0,W,H);
+
+    // occasional stars
+    if(Math.random() < 0.02) {
+      const sx = Math.random()*W, sy = Math.random()*H*0.45;
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.fillRect(sx, sy, 1,1);
+    }
+
+    for(let i = rockets.length-1;i>=0;i--){
+      rockets[i].step(dt);
+      if(!rockets[i].alive) rockets.splice(i,1);
+    }
+
+    for(let i = particles.length-1;i>=0;i--){
+      const p = particles[i];
+      p.step(dt);
+      const ageFactor = p.age / Math.max(1, p.maxLife);
+      if(p.x < -80 || p.x > W+80 || p.y < -120 || p.y > H+80 || ageFactor > 1.05 || p.size < 0.08) {
+        particles.splice(i,1);
+      }
+    }
+
+    for(let i=0;i<particles.length;i++) particles[i].render(ctx);
+    for(let r of rockets) r.render(ctx);
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.fillRect(0, H - 26, W, 26);
+    ctx.restore();
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const bigGrad = ctx.createRadialGradient(W*0.5, H*0.5, 0, W*0.5, H*0.5, Math.max(W,H));
+    bigGrad.addColorStop(0, `rgba(255,200,180,${0.01*glowIntensity})`);
+    bigGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = bigGrad;
+    ctx.fillRect(0,0,W,H);
+    ctx.restore();
+
+    ctx.save();
+    ctx.font = '12px system-ui,Segoe UI,Roboto';
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.fillText(`Rockets: ${rockets.length}  Particles: ${particles.length}`, 8, 20);
+    ctx.restore();
+
+    if(shakeAmt > 0.01){
+      canvas.style.transform = `translate(${rand(-shakeAmt,shakeAmt).toFixed(2)}px, ${rand(-shakeAmt,shakeAmt).toFixed(2)}px)`;
+      shakeAmt *= 0.92;
+    } else {
+      canvas.style.transform = '';
+      shakeAmt = 0;
+    }
+
+    requestAnimationFrame(loop);
+  }
+
+  // Auto-launch ticks
+  function autoLaunchTick() {
+    const rate = Math.max(0, parseInt(rateEl.value,10));
+    const chance = rate / (5 * 60);
+    if(Math.random() < chance) {
+      const sx = rand(80, W-80);
+      const tx = rand(80, W-80);
+      const ty = rand(60, H*0.5);
+      rockets.push(new Rocket(sx, H+40, tx, ty, choose(choose(palettes))));
+    }
+    setTimeout(autoLaunchTick, 1000/30);
+  }
+
+  // Pointer to launch rocket to clicked location
+  canvas.addEventListener('pointerdown', (ev) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = ev.clientX - rect.left;
+    const y = ev.clientY - rect.top;
+    const sx = rand(W*0.2, W*0.8);
+    rockets.push(new Rocket(sx, H+20, x, y, choose(choose(palettes))));
+    // Some browsers block sound until user interacts; clicking helps unlock audio
+    try { ensureAudioCtx(); } catch(e){}
+  });
+
+  launchBtn.onclick = () => {
+    const tx = rand(120, W-120);
+    rockets.push(new Rocket(rand(80, W-80), H+20, tx, rand(60, H*0.5 - 20), choose(choose(palettes))));
+  };
+
+  clearBtn.onclick = () => {
+    rockets.length = 0;
+    particles.length = 0;
+    ctx.clearRect(0,0,W,H);
+  };
+
+  snapshotBtn.onclick = () => {
+    const data = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = data;
+    a.download = `fireworks_snapshot_${Date.now()}.png`;
+    a.click();
+  };
+
+  // Recording
+  let recorder = null;
+  let recordedChunks = [];
+  recordBtn.onclick = async () => {
+    if(recorder && recorder.state === 'recording') {
+      recorder.stop();
+      recordBtn.textContent = 'Start Recording';
+      recordBtn.style.opacity = 1;
+    } else {
+      const stream = canvas.captureStream(30);
+      recordedChunks = [];
+      recorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
+      recorder.ondataavailable = e => { if(e.data && e.data.size) recordedChunks.push(e.data); };
+      recorder.onstop = e => {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `fireworks_${Date.now()}.webm`;
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+      recorder.start();
+      recordBtn.textContent = 'Stop Recording';
+      recordBtn.style.opacity = 0.95;
+    }
+  };
+
+  // Kick things off
+  requestAnimationFrame(loop);
+  autoLaunchTick();
+  setTimeout(()=>{ for(let i=0;i<6;i++){ setTimeout(()=>launchBtn.click(), i*380); } }, 300);
+
+})();
+</script>
+</body>
+</html>
