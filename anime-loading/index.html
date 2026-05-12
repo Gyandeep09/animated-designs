@@ -2,250 +2,307 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Loading...</title>
-<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Loading…</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:#0d0916;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;font-family:'M PLUS Rounded 1c',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#080612;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;font-family:system-ui}
+.overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;transition:opacity 1s;gap:24px}
+.overlay.gone{opacity:0;pointer-events:none}
 
-/* ── Starfield ── */
-.stars{position:fixed;inset:0;pointer-events:none}
-@keyframes twinkle{0%,100%{opacity:0;transform:scale(.5)}50%{opacity:1;transform:scale(1)}}
+/* Orbit rings */
+.orbit-ring{position:absolute;border:1px solid rgba(139,92,246,.12);border-radius:50%;pointer-events:none}
+.orbit-ring:nth-child(1){width:420px;height:420px;animation:spin 20s linear infinite}
+.orbit-ring:nth-child(2){width:540px;height:540px;animation:spin 28s linear infinite reverse}
+.orbit-ring:nth-child(3){width:640px;height:640px;animation:spin 35s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.orbit-dot{position:absolute;width:6px;height:6px;border-radius:50%;background:#818cf8;box-shadow:0 0 12px #818cf8}
+.orbit-ring:nth-child(1) .orbit-dot{top:0;left:50%;transform:translate(-50%,-50%)}
+.orbit-ring:nth-child(2) .orbit-dot{bottom:0;left:50%;transform:translate(-50%,50%);background:#c084fc;box-shadow:0 0 12px #c084fc}
+.orbit-ring:nth-child(3) .orbit-dot{top:50%;right:0;transform:translate(50%,-50%);background:#38bdf8;box-shadow:0 0 12px #38bdf8}
 
-/* ── Loader overlay ── */
-.overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;z-index:10;transition:opacity .9s,visibility .9s}
-.overlay.gone{opacity:0;visibility:hidden}
+/* Grid floor */
+.grid-floor{position:fixed;bottom:0;left:0;right:0;height:35vh;
+  background:linear-gradient(0deg,rgba(99,102,241,.06) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(99,102,241,.06) 1px,transparent 1px);
+  background-size:40px 40px;
+  transform:perspective(400px) rotateX(55deg);transform-origin:bottom;opacity:.5}
 
-/* ── Scene card ── */
-.scene{display:flex;flex-direction:column;align-items:center;gap:0}
+/* Scan line */
+.scan{position:fixed;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(139,92,246,.4),transparent);animation:scanmove 3.5s linear infinite;z-index:1}
+@keyframes scanmove{from{top:-2px}to{top:100%}}
 
-/* ── SVG character animations ── */
+/* Progress */
+.prog-wrap{width:240px;position:relative}
+.prog-track{height:4px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden}
+.prog-bar{height:100%;width:0;border-radius:4px;background:linear-gradient(90deg,#818cf8,#c084fc,#38bdf8)}
+.prog-label{text-align:center;margin-top:10px;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:#555}
 
-/* Whole body float */
-.body-float{animation:float 3.2s ease-in-out infinite;transform-origin:50% 100%}
-@keyframes float{0%,100%{transform:translateY(0) rotate(-.5deg)}40%{transform:translateY(-12px) rotate(.8deg)}70%{transform:translateY(-6px) rotate(-.3deg)}}
+/* Particles */
+.particle{position:fixed;border-radius:50%;pointer-events:none;opacity:0}
+@keyframes pfloat{0%{opacity:0;transform:translateY(0) scale(.3)}15%{opacity:.6}85%{opacity:.15}100%{opacity:0;transform:translateY(-100vh) scale(.8)}}
 
-/* Hair sways AFTER body with slight delay */
-.hair-sway{animation:float 3.2s ease-in-out .18s infinite;transform-origin:50% 0}
-@keyframes hairsway{0%,100%{transform:rotate(-1.5deg)}50%{transform:rotate(2deg)}}
-
-/* Eye blink - top eyelid drops */
-.eyelid-l,.eyelid-r{transform-origin:50% 0;animation:blink 4.5s ease-in-out infinite}
-.eyelid-r{animation-delay:.06s}
-@keyframes blink{0%,88%,100%{transform:scaleY(0)}91%,96%{transform:scaleY(1)}99%{transform:scaleY(.1)}}
-
-/* Leg swing - opposite phase */
-.leg-l{transform-origin:84px 0;animation:swing-l 2.2s ease-in-out infinite}
-.leg-r{transform-origin:116px 0;animation:swing-r 2.2s ease-in-out infinite}
-@keyframes swing-l{0%,100%{transform:rotate(-14deg)}50%{transform:rotate(16deg)}}
-@keyframes swing-r{0%,100%{transform:rotate(16deg)}50%{transform:rotate(-14deg)}}
-
-/* Breathing - chest subtle scale */
-.body-shape{animation:breathe 3.2s ease-in-out infinite;transform-origin:50% 40%}
-@keyframes breathe{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.025)}}
-
-/* Yawn sequence every 8s */
-.mouth-smile{animation:mouth-hide 8s ease-in-out infinite;transform-origin:50% 50%}
-@keyframes mouth-hide{0%,58%,90%,100%{transform:scaleY(1);opacity:1}62%,85%{transform:scaleY(0);opacity:0}}
-.mouth-yawn{opacity:0;animation:yawn-show 8s ease-in-out infinite;transform-origin:50% 50%}
-@keyframes yawn-show{0%,58%,90%,100%{transform:scale(0);opacity:0}63%,84%{transform:scale(1);opacity:1}}
-
-/* Arm raise during yawn */
-.arm-l-g{transform-origin:68px 175px;animation:arm-up 8s ease-in-out infinite}
-@keyframes arm-up{0%,58%,92%,100%{transform:rotate(0)}65%,83%{transform:rotate(-55deg)}}
-
-/* Blush pulse */
-.blush{animation:blush-pulse 3.2s ease-in-out infinite}
-@keyframes blush-pulse{0%,100%{opacity:.55}50%{opacity:.8}}
-
-/* Z floats */
-.z1{animation:z-up 2.8s ease-out 0s infinite}
-.z2{animation:z-up 2.8s ease-out .9s infinite}
-.z3{animation:z-up 2.8s ease-out 1.8s infinite}
-@keyframes z-up{0%{opacity:0;transform:translate(0,0) scale(.5)}15%{opacity:1}100%{opacity:0;transform:translate(18px,-52px) scale(1)}}
-
-/* ── Progress bar ── */
-.bar-wrap{width:220px;position:relative}
-.bar-track{height:8px;background:rgba(255,255,255,.08);border-radius:8px;overflow:hidden}
-.bar-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,#818cf8,#e879f9,#38bdf8);animation:fill-up 3.4s cubic-bezier(.4,0,.2,1) forwards}
-@keyframes fill-up{0%{width:0%}100%{width:100%}}
-.bar-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:shimmer 1.2s linear infinite}
-@keyframes shimmer{from{transform:translateX(-200%)}to{transform:translateX(300%)}}
-
-/* dots */
-.dots{display:flex;gap:7px;justify-content:center;margin-top:10px}
-.dot{width:7px;height:7px;border-radius:50%;animation:hop 1.3s ease-in-out infinite}
-.dot:nth-child(1){background:#818cf8}
-.dot:nth-child(2){background:#e879f9;animation-delay:.22s}
-.dot:nth-child(3){background:#38bdf8;animation-delay:.44s}
-@keyframes hop{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-8px)}}
-
-/* bubble text cycle */
-.bubble-box{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(8px);border-radius:12px;padding:6px 16px;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#888;margin-top:6px;min-width:180px;text-align:center;transition:opacity .35s}
+/* Page content */
+.page{height:100vh;display:flex;align-items:center;justify-content:center;color:#333;font-size:1rem}
 </style>
 </head>
 <body>
-
-<!-- Stars -->
-<div class="stars" id="stars"></div>
+<div class="grid-floor"></div>
+<div class="scan"></div>
 
 <div class="overlay" id="loader">
-<div class="scene">
+  <!-- Orbit rings -->
+  <div class="orbit-ring"><div class="orbit-dot"></div></div>
+  <div class="orbit-ring"><div class="orbit-dot"></div></div>
+  <div class="orbit-ring"><div class="orbit-dot"></div></div>
 
-<!-- CHARACTER SVG -->
-<svg width="210" height="310" viewBox="0 0 200 295" xmlns="http://www.w3.org/2000/svg" overflow="visible">
+  <!-- CHARACTER -->
+  <svg id="char" width="280" height="380" viewBox="0 0 280 380" style="overflow:visible">
+    <defs>
+      <radialGradient id="glow1"><stop offset="0%" stop-color="#a78bfa" stop-opacity=".3"/><stop offset="100%" stop-color="transparent"/></radialGradient>
+      <linearGradient id="hair-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6d28d9"/><stop offset="100%" stop-color="#3b0764"/></linearGradient>
+      <linearGradient id="skin-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fde4cc"/><stop offset="100%" stop-color="#f5c8a0"/></linearGradient>
+      <linearGradient id="hoodie-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7c3aed"/><stop offset="50%" stop-color="#6d28d9"/><stop offset="100%" stop-color="#4c1d95"/></linearGradient>
+      <linearGradient id="skirt-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#0f0a2a"/></linearGradient>
+      <filter id="shadow1"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity=".25"/></filter>
+    </defs>
 
-  <!-- Z Z Z -->
-  <text class="z1" x="155" y="50" font-size="20" fill="#a78bfa" font-weight="900" font-family="Arial">Z</text>
-  <text class="z2" x="172" y="32" font-size="14" fill="#c4b5fd" font-weight="900" font-family="Arial">z</text>
-  <text class="z3" x="185" y="18" font-size="10" fill="#ddd6fe" font-weight="900" font-family="Arial">z</text>
+    <!-- Floor glow -->
+    <ellipse cx="140" cy="370" rx="80" ry="14" fill="url(#glow1)" id="floorGlow"/>
 
-  <!-- ── BODY GROUP (floats) ── -->
-  <g class="body-float">
-
-    <!-- Back hair -->
-    <ellipse class="hair-sway" cx="100" cy="88" rx="52" ry="60" fill="#3b1f6b"/>
-    <!-- Side hair pieces (sway) -->
-    <ellipse class="hair-sway" cx="52" cy="118" rx="13" ry="26" fill="#3b1f6b" transform="rotate(-12,52,118)"/>
-    <ellipse class="hair-sway" cx="148" cy="118" rx="13" ry="26" fill="#3b1f6b" transform="rotate(12,148,118)"/>
-
-    <!-- HEAD -->
-    <ellipse cx="100" cy="94" rx="46" ry="48" fill="#ffe8d0"/>
-
-    <!-- Front bangs -->
-    <path class="hair-sway" d="M54,82 Q62,42 100,37 Q138,42 146,82 Q132,64 115,68 Q100,56 85,68 Q68,64 54,82Z" fill="#3b1f6b"/>
-
-    <!-- Ear -->
-    <ellipse cx="54" cy="100" rx="9" ry="11" fill="#fdd0b0"/>
-    <ellipse cx="146" cy="100" rx="9" ry="11" fill="#fdd0b0"/>
-
-    <!-- ── EYES ── -->
-    <!-- Left eye white -->
-    <ellipse cx="83" cy="99" rx="13" ry="15" fill="white"/>
-    <!-- Left iris -->
-    <ellipse cx="83" cy="101" rx="10" ry="12" fill="#7c52bb"/>
-    <!-- Left pupil -->
-    <ellipse cx="83" cy="102" rx="6" ry="7" fill="#1e0f3a"/>
-    <!-- Left shine 1 -->
-    <ellipse cx="79" cy="97" rx="3" ry="3" fill="white"/>
-    <!-- Left shine 2 small -->
-    <ellipse cx="88" cy="106" rx="1.5" ry="1.5" fill="rgba(255,255,255,.7)"/>
-    <!-- Left eyelash line -->
-    <path d="M70,94 Q83,86 96,94" stroke="#1e0f3a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <!-- Left eyelid (blink) -->
-    <ellipse class="eyelid-l" cx="83" cy="94" rx="13" ry="15" fill="#ffe8d0"/>
-
-    <!-- Right eye white -->
-    <ellipse cx="117" cy="99" rx="13" ry="15" fill="white"/>
-    <!-- Right iris -->
-    <ellipse cx="117" cy="101" rx="10" ry="12" fill="#7c52bb"/>
-    <!-- Right pupil -->
-    <ellipse cx="117" cy="102" rx="6" ry="7" fill="#1e0f3a"/>
-    <!-- Right shine 1 -->
-    <ellipse cx="113" cy="97" rx="3" ry="3" fill="white"/>
-    <ellipse cx="122" cy="106" rx="1.5" ry="1.5" fill="rgba(255,255,255,.7)"/>
-    <!-- Right eyelash line -->
-    <path d="M104,94 Q117,86 130,94" stroke="#1e0f3a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <!-- Right eyelid (blink) -->
-    <ellipse class="eyelid-r" cx="117" cy="94" rx="13" ry="15" fill="#ffe8d0"/>
-
-    <!-- Nose -->
-    <ellipse cx="100" cy="115" rx="4" ry="3" fill="#f0b898"/>
-
-    <!-- Mouth smile (hides during yawn) -->
-    <path class="mouth-smile" d="M88,125 Q100,133 112,125" stroke="#c47066" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <!-- Mouth yawn (big open circle, appears during yawn) -->
-    <g class="mouth-yawn">
-      <ellipse cx="100" cy="128" rx="13" ry="15" fill="#b05050"/>
-      <ellipse cx="100" cy="131" rx="9" ry="8" fill="#1e0f3a"/>
-      <rect x="94" y="121" width="12" height="5" rx="2" fill="#f8d0c0"/>
+    <!-- ── LEGS ── -->
+    <g id="legL">
+      <path d="M108,295 Q106,325 104,350 Q103,362 110,365 L126,365 Q130,362 128,350 Q126,325 124,295Z" fill="url(#skin-g)"/>
+      <path d="M104,350 Q103,368 112,370 L128,370 Q134,368 130,358 Q128,350 126,348Z" fill="#1e1b4b"/>
+    </g>
+    <g id="legR">
+      <path d="M156,295 Q154,325 152,350 Q151,362 158,365 L174,365 Q178,362 176,350 Q174,325 172,295Z" fill="url(#skin-g)"/>
+      <path d="M152,350 Q151,368 160,370 L176,370 Q182,368 178,358 Q176,350 174,348Z" fill="#1e1b4b"/>
     </g>
 
-    <!-- Blush -->
-    <ellipse class="blush" cx="68" cy="118" rx="14" ry="9" fill="#ffb5c8" opacity=".55"/>
-    <ellipse class="blush" cx="132" cy="118" rx="14" ry="9" fill="#ffb5c8" opacity=".55"/>
-
-    <!-- ── BODY / HOODIE ── -->
-    <g class="body-shape">
-      <path d="M62,155 Q48,175 52,230 L148,230 Q152,175 138,155 Q122,146 100,146 Q78,146 62,155Z" fill="#9b72cf"/>
+    <!-- ── BODY ── -->
+    <g id="bodyG">
+      <!-- Skirt -->
+      <path id="skirt" d="M90,260 Q88,280 82,300 L198,300 Q192,280 190,260Z" fill="url(#skirt-g)"/>
+      <!-- Hoodie body -->
+      <path d="M92,180 Q80,200 86,260 L194,260 Q200,200 188,180 Q170,168 140,166 Q110,168 92,180Z" fill="url(#hoodie-g)" filter="url(#shadow1)"/>
       <!-- Hoodie pocket -->
-      <rect x="80" y="195" width="40" height="26" rx="9" fill="#8560b8"/>
-      <!-- Hoodie drawstrings -->
-      <line x1="93" y1="163" x2="89" y2="192" stroke="#7a50a8" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="107" y1="163" x2="111" y2="192" stroke="#7a50a8" stroke-width="2.5" stroke-linecap="round"/>
+      <rect x="112" y="225" width="56" height="28" rx="10" fill="#5b21b6" opacity=".6"/>
+      <!-- Zip line -->
+      <line x1="140" y1="180" x2="140" y2="258" stroke="#4c1d95" stroke-width="2" opacity=".5"/>
+      <!-- Collar -->
+      <path d="M115,180 Q140,192 165,180" fill="none" stroke="#5b21b6" stroke-width="3"/>
     </g>
 
-    <!-- ── LEFT ARM ── -->
-    <g class="arm-l-g">
-      <path d="M62,155 Q38,168 32,202 Q30,213 39,217 Q49,221 53,208 Q61,182 72,167Z" fill="#9b72cf"/>
-      <ellipse cx="36" cy="219" rx="11" ry="10" fill="#ffe8d0"/>
+    <!-- ── ARMS ── -->
+    <!-- Left arm (crossed position, will animate) -->
+    <g id="armL">
+      <path d="M92,188 Q68,200 58,228 Q54,240 62,244 Q72,248 78,236 Q88,212 96,198Z" fill="url(#hoodie-g)"/>
+      <ellipse cx="62" cy="246" rx="12" ry="10" fill="url(#skin-g)"/>
+    </g>
+    <!-- Right arm -->
+    <g id="armR">
+      <path d="M188,188 Q212,200 222,228 Q226,240 218,244 Q208,248 202,236 Q192,212 184,198Z" fill="url(#hoodie-g)"/>
+      <ellipse cx="218" cy="246" rx="12" ry="10" fill="url(#skin-g)"/>
     </g>
 
-    <!-- RIGHT ARM (static, holds phone) -->
-    <path d="M138,155 Q162,168 168,202 Q170,213 161,217 Q151,221 147,208 Q139,182 128,167Z" fill="#9b72cf"/>
-    <ellipse cx="164" cy="219" rx="11" ry="10" fill="#ffe8d0"/>
-    <!-- Phone in right hand -->
-    <rect x="155" y="222" width="18" height="26" rx="4" fill="#1e0f3a"/>
-    <rect x="157" y="225" width="14" height="18" rx="2" fill="#38bdf8" opacity=".7"/>
+    <!-- ── NECK ── -->
+    <rect x="130" y="152" width="20" height="28" rx="8" fill="url(#skin-g)"/>
 
-    <!-- ── LEGS (dangle & swing) ── -->
-    <g class="leg-l">
-      <rect x="71" y="230" width="24" height="55" rx="12" fill="#6a42a0"/>
-      <!-- shoe -->
-      <ellipse cx="83" cy="287" rx="18" ry="10" fill="#251650"/>
-      <ellipse cx="89" cy="285" rx="8" ry="6" fill="#3b2570"/>
+    <!-- ── HEAD ── -->
+    <g id="headG">
+      <!-- Back hair mass -->
+      <ellipse cx="140" cy="100" rx="62" ry="68" fill="url(#hair-g)"/>
+      <!-- Side hair left -->
+      <path id="hairL" d="M78,100 Q65,120 68,155 Q70,168 80,165 Q85,158 82,140 Q80,120 82,100Z" fill="url(#hair-g)"/>
+      <!-- Side hair right -->
+      <path id="hairR" d="M202,100 Q215,120 212,155 Q210,168 200,165 Q195,158 198,140 Q200,120 198,100Z" fill="url(#hair-g)"/>
+
+      <!-- Face -->
+      <ellipse cx="140" cy="108" rx="52" ry="56" fill="url(#skin-g)"/>
+
+      <!-- Bangs -->
+      <path d="M88,94 Q92,52 140,44 Q188,52 192,94 Q175,72 158,80 Q140,62 122,80 Q105,72 88,94Z" fill="url(#hair-g)"/>
+      <!-- Hair highlight -->
+      <path d="M110,60 Q130,50 150,60" stroke="rgba(255,255,255,.15)" stroke-width="3" fill="none"/>
+
+      <!-- Ears -->
+      <ellipse cx="88" cy="112" rx="10" ry="14" fill="#f5c8a0"/>
+      <ellipse cx="88" cy="112" rx="6" ry="9" fill="#f0b898"/>
+      <ellipse cx="192" cy="112" rx="10" ry="14" fill="#f5c8a0"/>
+      <ellipse cx="192" cy="112" rx="6" ry="9" fill="#f0b898"/>
+
+      <!-- ── EYES ── -->
+      <g id="eyesG">
+        <!-- Left eye -->
+        <ellipse cx="118" cy="110" rx="16" ry="18" fill="white"/>
+        <ellipse cx="118" cy="113" rx="12" ry="14" fill="#7c3aed"/>
+        <ellipse cx="118" cy="114" rx="7" ry="9" fill="#1e0a3a"/>
+        <ellipse cx="114" cy="106" rx="4" ry="4" fill="white"/>
+        <ellipse cx="123" cy="118" rx="2" ry="2" fill="rgba(255,255,255,.6)"/>
+        <path d="M102,102 Q118,92 134,102" stroke="#1e0a3a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <!-- Eyelid -->
+        <ellipse id="lidL" cx="118" cy="102" rx="16" ry="18" fill="url(#skin-g)" opacity="0"/>
+
+        <!-- Right eye -->
+        <ellipse cx="162" cy="110" rx="16" ry="18" fill="white"/>
+        <ellipse cx="162" cy="113" rx="12" ry="14" fill="#7c3aed"/>
+        <ellipse cx="162" cy="114" rx="7" ry="9" fill="#1e0a3a"/>
+        <ellipse cx="158" cy="106" rx="4" ry="4" fill="white"/>
+        <ellipse cx="167" cy="118" rx="2" ry="2" fill="rgba(255,255,255,.6)"/>
+        <path d="M146,102 Q162,92 178,102" stroke="#1e0a3a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <ellipse id="lidR" cx="162" cy="102" rx="16" ry="18" fill="url(#skin-g)" opacity="0"/>
+      </g>
+
+      <!-- Nose -->
+      <ellipse cx="140" cy="128" rx="4" ry="3" fill="#e8a882"/>
+
+      <!-- Mouth -->
+      <g id="mouthG">
+        <path id="mouthPath" d="M126,138 Q140,146 154,138" stroke="#c06060" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      </g>
+
+      <!-- Blush -->
+      <ellipse id="blushL" cx="104" cy="130" rx="14" ry="8" fill="#ffaac8" opacity=".45"/>
+      <ellipse id="blushR" cx="176" cy="130" rx="14" ry="8" fill="#ffaac8" opacity=".45"/>
+
+      <!-- Steam puff (hidden, animated in) -->
+      <g id="steamG" opacity="0">
+        <circle cx="200" cy="80" r="8" fill="rgba(200,200,255,.5)"/>
+        <circle cx="212" cy="65" r="12" fill="rgba(200,200,255,.4)"/>
+        <circle cx="226" cy="48" r="16" fill="rgba(200,200,255,.25)"/>
+      </g>
+
+      <!-- Holographic watch (on left wrist area, hidden initially) -->
+      <g id="watchG" opacity="0" transform="translate(40,240)">
+        <ellipse cx="0" cy="0" rx="22" ry="22" fill="rgba(99,102,241,.15)" stroke="#818cf8" stroke-width="1"/>
+        <text x="-12" y="4" font-size="10" fill="#a5b4fc" font-family="monospace">03:42</text>
+        <circle cx="0" cy="0" r="22" fill="none" stroke="#818cf8" stroke-width="1" stroke-dasharray="4 4">
+          <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="3s" repeatCount="indefinite"/>
+        </circle>
+      </g>
     </g>
-    <g class="leg-r">
-      <rect x="105" y="230" width="24" height="55" rx="12" fill="#6a42a0"/>
-      <!-- shoe -->
-      <ellipse cx="117" cy="287" rx="18" ry="10" fill="#251650"/>
-      <ellipse cx="123" cy="285" rx="8" ry="6" fill="#3b2570"/>
+
+    <!-- Vibration lines (impatience indicator) -->
+    <g id="vibeLines" opacity="0">
+      <line x1="60" y1="160" x2="50" y2="155" stroke="#a78bfa" stroke-width="2" stroke-linecap="round"/>
+      <line x1="58" y1="172" x2="46" y2="170" stroke="#a78bfa" stroke-width="2" stroke-linecap="round"/>
+      <line x1="220" y1="160" x2="230" y2="155" stroke="#a78bfa" stroke-width="2" stroke-linecap="round"/>
+      <line x1="222" y1="172" x2="234" y2="170" stroke="#a78bfa" stroke-width="2" stroke-linecap="round"/>
     </g>
+  </svg>
 
-  </g><!-- /body-float -->
-
-</svg>
-
-<!-- Progress bar (she's sitting on it visually) -->
-<div class="bar-wrap">
-  <div class="bar-track"><div class="bar-fill"></div></div>
-  <div class="dots">
-    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <!-- Progress -->
+  <div class="prog-wrap">
+    <div class="prog-track"><div class="prog-bar" id="progBar"></div></div>
+    <div class="prog-label" id="progLabel">Initializing systems…</div>
   </div>
 </div>
 
-<div class="bubble-box" id="bubbleTxt">Initializing…</div>
+<div class="page">Content loaded ✦</div>
 
-</div><!-- /scene -->
-</div><!-- /overlay -->
-
-<div style="height:100vh;display:flex;align-items:center;justify-content:center;color:#333;font-size:1rem;letter-spacing:.08em">Content ready ✦</div>
-
+<!-- GSAP -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script>
-// Stars
-const sc=document.getElementById('stars');
-for(let i=0;i<90;i++){
-  const s=document.createElement('div');
-  const sz=Math.random()*2.5+.8;
-  s.style.cssText=`position:absolute;border-radius:50%;width:${sz}px;height:${sz}px;background:#fff;left:${Math.random()*100}vw;top:${Math.random()*100}vh;animation:twinkle ${(Math.random()*3+2).toFixed(1)}s ease-in-out ${(Math.random()*5).toFixed(1)}s infinite`;
-  sc.appendChild(s);
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+// Particles
+for(let i=0;i<30;i++){
+  const p=document.createElement('div');p.className='particle';
+  const sz=Math.random()*3+1.5;
+  const clrs=['#818cf8','#c084fc','#38bdf8','#a78bfa'];
+  p.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}vw;bottom:-10px;background:${clrs[~~(Math.random()*4)]};animation:pfloat ${6+Math.random()*8}s linear ${Math.random()*6}s infinite`;
+  document.body.appendChild(p);
 }
 
-// Bubble messages
-const msgs=['Initializing…','Brewing magic ✨','Almost there…','Loading assets 🌙','One moment~ 💤','Getting ready 🍡'];
-let mi=0;const bb=document.getElementById('bubbleTxt');
-setInterval(()=>{
-  bb.style.opacity=0;
-  setTimeout(()=>{bb.textContent=msgs[mi=(mi+1)%msgs.length];bb.style.opacity=1;},350);
-},2400);
+// ── GSAP MASTER TIMELINE ──
+gsap.defaults({ease:'power2.inOut'});
 
-// Dismiss loader
-const ov=document.getElementById('loader');
-let rdy=false,done=false;
-window.addEventListener('load',()=>{rdy=true;go()});
-setTimeout(()=>{done=true;go()},3400);
-function go(){if(rdy&&done)ov.classList.add('gone')}
+// Breathing
+gsap.to('#bodyG',{scaleY:1.015,transformOrigin:'50% 100%',duration:1.6,yoyo:true,repeat:-1,ease:'sine.inOut'});
+
+// Hair float
+gsap.to('#hairL',{rotate:3,transformOrigin:'50% 0%',duration:2.4,yoyo:true,repeat:-1,ease:'sine.inOut'});
+gsap.to('#hairR',{rotate:-3,transformOrigin:'50% 0%',duration:2.4,yoyo:true,repeat:-1,ease:'sine.inOut',delay:.3});
+
+// Blush pulse
+gsap.to('#blushL,#blushR',{opacity:.7,duration:1.8,yoyo:true,repeat:-1,ease:'sine.inOut'});
+
+// Floor glow pulse
+gsap.to('#floorGlow',{opacity:.6,scaleX:1.1,transformOrigin:'50% 50%',duration:2,yoyo:true,repeat:-1,ease:'sine.inOut'});
+
+// ── BLINK ──
+function blink(){
+  const tl=gsap.timeline();
+  tl.to('#lidL,#lidR',{opacity:1,duration:.08})
+    .to('#lidL,#lidR',{opacity:0,duration:.08},'+=.06')
+    .then(()=>gsap.delayedCall(.1+Math.random()*3,blink));
+}
+blink();
+
+// ── PHASE A: IMPATIENT FOOT TAP ──
+const footTap=gsap.timeline({repeat:-1});
+footTap.to('#legR',{rotate:-12,transformOrigin:'160px 295px',duration:.15,ease:'power3.out'})
+  .to('#legR',{rotate:0,duration:.12,ease:'bounce.out'})
+  .to('#legR',{rotate:0,duration:.4});
+
+// Vibration lines flicker with foot tap
+gsap.to('#vibeLines',{opacity:.6,duration:.1,yoyo:true,repeat:-1,repeatDelay:.4});
+
+// Body micro-shake (impatience)
+const shake=gsap.timeline({repeat:-1,repeatDelay:2});
+shake.to('#char',{x:2,duration:.04}).to('#char',{x:-2,duration:.04}).to('#char',{x:1.5,duration:.04}).to('#char',{x:-1,duration:.04}).to('#char',{x:0,duration:.06});
+
+// ── PHASE B: CHECK WATCH + HUFF (every 4s) ──
+function checkWatch(){
+  const tl=gsap.timeline({onComplete:()=>gsap.delayedCall(3+Math.random()*2,checkWatch)});
+
+  // Arm raises to look at watch
+  tl.to('#armL',{rotate:-50,transformOrigin:'92px 188px',duration:.5,ease:'back.out(1.5)'})
+    .to('#watchG',{opacity:1,duration:.3},'-=.2')
+    .to('#headG',{rotate:-8,transformOrigin:'140px 140px',duration:.35,ease:'power2.out'},'-=.2')
+    // Hold + look
+    .to({},{duration:.8})
+    // Huff — mouth opens
+    .to('#mouthPath',{attr:{d:'M126,136 Q140,150 154,136'},duration:.15},'huff')
+    // Steam puff shoots out
+    .to('#steamG',{opacity:1,y:-10,duration:.3,ease:'power2.out'},'huff')
+    .to('#steamG circle:nth-child(1)',{scale:1.3,transformOrigin:'50% 50%',duration:.4},'huff')
+    .to('#steamG circle:nth-child(2)',{scale:1.4,y:-8,transformOrigin:'50% 50%',duration:.5},'huff+=.1')
+    .to('#steamG circle:nth-child(3)',{scale:1.5,y:-12,transformOrigin:'50% 50%',duration:.6},'huff+=.15')
+    // Hair poof
+    .to('#hairL,#hairR',{scaleX:1.15,scaleY:1.08,transformOrigin:'50% 100%',duration:.2,ease:'back.out(3)'},'huff')
+    // Hold
+    .to({},{duration:.5})
+    // Reset everything
+    .to('#armL',{rotate:0,duration:.4,ease:'power2.inOut'})
+    .to('#watchG',{opacity:0,duration:.2},'-=.3')
+    .to('#headG',{rotate:0,duration:.3},'-=.2')
+    .to('#mouthPath',{attr:{d:'M126,138 Q140,146 154,138'},duration:.2},'-=.2')
+    .to('#steamG',{opacity:0,y:0,duration:.3},'-=.2')
+    .to('#steamG circle',{scale:1,y:0,duration:.01})
+    .to('#hairL,#hairR',{scaleX:1,scaleY:1,duration:.3,ease:'power2.inOut'},'-=.3');
+}
+gsap.delayedCall(2,checkWatch);
+
+// ── PROGRESS BAR ──
+const labels=['Initializing systems…','Compiling shaders…','Loading assets…','Calibrating…','Almost there…','Finalizing…'];
+let li=0;
+gsap.to('#progBar',{width:'100%',duration:8,ease:'power1.inOut'});
+const labelLoop=setInterval(()=>{
+  li=(li+1)%labels.length;
+  gsap.to('#progLabel',{opacity:0,duration:.2,onComplete:()=>{
+    $('#progLabel').textContent=labels[li];
+    gsap.to('#progLabel',{opacity:1,duration:.2});
+  }});
+},1800);
+
+// Dismiss
+setTimeout(()=>{
+  clearInterval(labelLoop);
+  gsap.to('.overlay',{opacity:0,duration:.8,onComplete:()=>$('.overlay').style.display='none'});
+},8500);
 </script>
 </body>
 </html>

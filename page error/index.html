@@ -2,319 +2,356 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>404 — Page Not Found</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
+*{margin:0;padding:0;box-sizing:border-box}
 body{background:#fef3e2;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;font-family:'Nunito',sans-serif}
 
-/* Sky */
-body::before{content:'';position:fixed;inset:0;background:linear-gradient(180deg,#bfdbfe 0%,#fef3e2 55%);z-index:0}
+.card{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;gap:14px;padding-bottom:40px}
+.num{font-size:clamp(5rem,14vw,10rem);font-weight:900;color:#1e3a5f;letter-spacing:-.04em;line-height:1;text-shadow:5px 7px 0 rgba(30,58,95,.12)}
+
+/* ── STAGE ── */
+.stage{width:min(720px,96vw);height:260px;position:relative;overflow:hidden;border-radius:20px;background:linear-gradient(180deg,#bfdbfe 0%,#e0f2fe 40%,#fef3e2 70%);border:2px solid rgba(255,255,255,.6);box-shadow:0 12px 40px rgba(0,0,0,.08)}
+
+/* Parallax layers */
+.para-bg{position:absolute;bottom:70px;display:flex;gap:0;animation:paraScroll 4s linear infinite paused}
+.para-bg.running{animation-play-state:running}
+@keyframes paraScroll{from{transform:translateX(0)}to{transform:translateX(-720px)}}
+
+.hill{fill:#86efac;opacity:.5}
+.tree-trunk{fill:#92400e}
+.tree-top{fill:#16a34a}
 
 /* Ground */
-.ground{position:fixed;bottom:0;left:0;right:0;height:100px;z-index:1;
-  background:linear-gradient(to bottom,#86efac,#4ade80);
-  border-radius:50% 50% 0 0/18px 18px 0 0;
-  border-top:3px solid #16a34a}
+.stage-ground{position:absolute;bottom:0;left:0;right:0;height:70px;background:linear-gradient(to bottom,#86efac,#4ade80);border-top:3px solid #16a34a;z-index:3}
+.ground-detail{position:absolute;bottom:70px;left:0;width:200%;height:12px;z-index:2;
+  background:repeating-linear-gradient(90deg,rgba(34,197,94,.3) 0 8px,transparent 8px 28px);
+  animation:groundScroll 1.2s linear infinite paused}
+.ground-detail.running{animation-play-state:running}
+@keyframes groundScroll{from{transform:translateX(0)}to{transform:translateX(-28px)}}
 
-/* Clouds */
-@keyframes drift{from{transform:translateX(-30vw)}to{transform:translateX(120vw)}}
+/* Characters sit on z-index 5 */
+.char-layer{position:absolute;bottom:68px;left:0;right:0;height:180px;z-index:5}
 
-/* Card */
-.card{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;gap:16px;padding-bottom:80px}
+/* ── Dust ── */
+.dust-group{position:absolute;bottom:0;opacity:0;z-index:4}
 
-/* 404 */
-.num{font-size:clamp(5rem,14vw,10rem);font-weight:900;color:#1e3a5f;letter-spacing:-.04em;line-height:1;
-  text-shadow:5px 7px 0 rgba(30,58,95,.12);
-  animation:num-bob 2.8s ease-in-out infinite}
-@keyframes num-bob{0%,100%{transform:rotate(-1deg) translateY(0)}50%{transform:rotate(1deg) translateY(-5px)}}
+/* ── Speed lines ── */
+.speed-lines{position:absolute;right:0;top:50%;transform:translateY(-50%);opacity:0;z-index:4}
 
-/* ── SCENE STRIP ── */
-.scene-strip{width:min(640px,95vw);height:180px;position:relative;overflow:hidden;border-radius:16px;background:rgba(255,255,255,.35);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.5)}
-
-/* ── Ground line in strip ── */
-.strip-ground{position:absolute;bottom:0;left:0;right:0;height:40px;background:linear-gradient(to bottom,#86efac,#4ade80);border-top:2px solid #16a34a}
-
-/* ── FOOD BOWL (fish) ── */
-.bowl{position:absolute;left:80px;bottom:38px;animation:bowl-shake 10s ease-in-out infinite}
-@keyframes bowl-shake{0%,52%,100%{transform:translateX(0) rotate(0)}54%{transform:translateX(-6px) rotate(-8deg)}56%{transform:translateX(4px) rotate(6deg)}58%{transform:translateX(-8px) rotate(-10deg) translateY(-15px)}62%,100%{transform:translateX(-800px) rotate(-20deg)}}
-
-/* ── CAT ── */
-.cat{position:absolute;left:60px;bottom:38px;animation:cat-action 10s ease-in-out infinite;transform-origin:50% 100%}
-@keyframes cat-action{
-  /* 0-50%: peaceful eating */
-  0%{transform:translateX(0) scaleX(1)}
-  /* 50%: dog enters → cat STARTLES */
-  50%{transform:translateX(0) scaleX(1)}
-  52%{transform:translateX(0) scaleY(1.25) scaleX(.8)} /* squash up in fear */
-  54%{transform:translateX(0) scaleY(.85) scaleX(1.1)} /* squash down */
-  /* 55% onwards: run left (cat faces left = scaleX(-1)) */
-  55%{transform:translateX(0) scaleX(-1)}
-  80%{transform:translateX(-650px) scaleX(-1)}
-  82%,100%{transform:translateX(-650px) scaleX(-1)}
-}
-
-/* Cat body bob while eating */
-.cat-eat-bob{animation:eat-bob 0.5s ease-in-out infinite}
-@keyframes eat-bob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-3px) rotate(2deg)}}
-
-/* Cat tail swish */
-.cat-tail{transform-origin:10px 5px;animation:tail-swish 1.1s ease-in-out infinite}
-@keyframes tail-swish{0%,100%{transform:rotate(-25deg)}50%{transform:rotate(25deg)}}
-
-/* Cat running legs (cycle during run phase) */
-.cat-leg-f{transform-origin:10px 0;animation:run-leg-f 10s ease-in-out infinite}
-.cat-leg-b{transform-origin:10px 0;animation:run-leg-b 10s ease-in-out infinite}
-@keyframes run-leg-f{
-  0%,53%{transform:rotate(0)}
-  55%,79%{animation-timing-function:linear}
-  /* quick alternating rotations during run */
-  55%{transform:rotate(30deg)}57%{transform:rotate(-30deg)}59%{transform:rotate(30deg)}61%{transform:rotate(-30deg)}
-  63%{transform:rotate(30deg)}65%{transform:rotate(-30deg)}67%{transform:rotate(30deg)}69%{transform:rotate(-30deg)}
-  71%{transform:rotate(30deg)}73%{transform:rotate(-30deg)}75%{transform:rotate(30deg)}77%{transform:rotate(-30deg)}
-  79%,100%{transform:rotate(0)}
-}
-@keyframes run-leg-b{
-  0%,53%{transform:rotate(0)}
-  55%{transform:rotate(-30deg)}57%{transform:rotate(30deg)}59%{transform:rotate(-30deg)}61%{transform:rotate(30deg)}
-  63%{transform:rotate(-30deg)}65%{transform:rotate(30deg)}67%{transform:rotate(-30deg)}69%{transform:rotate(30deg)}
-  71%{transform:rotate(-30deg)}73%{transform:rotate(30deg)}75%{transform:rotate(-30deg)}77%{transform:rotate(30deg)}
-  79%,100%{transform:rotate(0)}
-}
-
-/* Cat eye (blinking while eating) */
-.cat-eye{animation:cat-blink 3.5s ease-in-out infinite;transform-origin:50% 0}
-@keyframes cat-blink{0%,88%,100%{transform:scaleY(1)}91%,95%{transform:scaleY(.1)}}
-
-/* ── DOG ── */
-.dog{position:absolute;right:-160px;bottom:38px;animation:dog-run 10s ease-in-out infinite;transform-origin:50% 100%}
-@keyframes dog-run{
-  /* 0-48%: waiting off-screen right */
-  0%,48%{transform:translateX(0) scaleX(1)}
-  /* 48-55%: zoom in from right  */
-  50%{transform:translateX(-40px) scaleX(1)}  /* slight anticipation rattle */
-  55%{transform:translateX(-530px) scaleX(1)} /* arrive at cat position */
-  /* skid: overshoot + come back */
-  57%{transform:translateX(-560px) scaleX(1)}
-  59%{transform:translateX(-540px) scaleX(1)}
-  /* 60-80% chase the cat leftward */
-  61%{transform:translateX(-540px) scaleX(-1)} /* now facing left */
-  82%{transform:translateX(-1200px) scaleX(-1)}
-  83%,100%{transform:translateX(-1200px) scaleX(-1)}
-}
-
-/* Dog tongue wag */
-.dog-tongue{transform-origin:6px 0;animation:tongue-wag 0.35s ease-in-out infinite}
-@keyframes tongue-wag{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(10deg)}}
-
-/* Dog tail wag */
-.dog-tail{transform-origin:0 10px;animation:dog-tail-wag .25s ease-in-out infinite}
-@keyframes dog-tail-wag{0%,100%{transform:rotate(-30deg)}50%{transform:rotate(30deg)}}
-
-/* Dog running legs */
-.dog-leg-f{transform-origin:8px 0;animation:dog-leg-cycle 10s linear infinite}
-.dog-leg-b{transform-origin:8px 0;animation:dog-leg-cycle2 10s linear infinite}
-@keyframes dog-leg-cycle{
-  0%,48%{transform:rotate(0)}
-  49%,82%{animation-timing-function:linear}
-  49%{transform:rotate(35deg)}51%{transform:rotate(-35deg)}53%{transform:rotate(35deg)}55%{transform:rotate(-35deg)}
-  57%{transform:rotate(35deg)}59%{transform:rotate(-35deg)}61%{transform:rotate(35deg)}63%{transform:rotate(-35deg)}
-  65%{transform:rotate(35deg)}67%{transform:rotate(-35deg)}69%{transform:rotate(35deg)}71%{transform:rotate(-35deg)}
-  73%{transform:rotate(35deg)}75%{transform:rotate(-35deg)}77%{transform:rotate(35deg)}79%{transform:rotate(-35deg)}
-  81%,100%{transform:rotate(0)}
-}
-@keyframes dog-leg-cycle2{
-  0%,48%{transform:rotate(0)}
-  49%{transform:rotate(-35deg)}51%{transform:rotate(35deg)}53%{transform:rotate(-35deg)}55%{transform:rotate(35deg)}
-  57%{transform:rotate(-35deg)}59%{transform:rotate(35deg)}61%{transform:rotate(-35deg)}63%{transform:rotate(35deg)}
-  65%{transform:rotate(-35deg)}67%{transform:rotate(35deg)}69%{transform:rotate(-35deg)}71%{transform:rotate(35deg)}
-  73%{transform:rotate(-35deg)}75%{transform:rotate(35deg)}77%{transform:rotate(-35deg)}79%{transform:rotate(35deg)}
-  81%,100%{transform:rotate(0)}
-}
-
-/* ── Dust puffs appear when chase starts ── */
-.dust-wrap{position:absolute;bottom:38px;left:100px;animation:dust-appear 10s infinite}
-@keyframes dust-appear{0%,53%,82%,100%{opacity:0}54%,80%{opacity:1}}
-@keyframes puff{0%{transform:scale(.2) translate(0,0);opacity:.7}100%{transform:scale(2.5) translate(-20px,-30px);opacity:0}}
-.puff1{animation:puff .6s ease-out 0s infinite}
-.puff2{animation:puff .6s ease-out .2s infinite}
-.puff3{animation:puff .6s ease-out .4s infinite}
-
-/* ── Fish drops when cat runs ── */
-.fish{position:absolute;left:96px;bottom:38px;font-size:24px;animation:fish-drop 10s infinite}
-@keyframes fish-drop{0%,53%{transform:translateY(0) rotate(0);opacity:0}
-54%{opacity:1;transform:translateY(0) rotate(0)}
-62%{transform:translateY(20px) rotate(45deg);opacity:1}
-70%,100%{transform:translateY(20px) rotate(60deg);opacity:.6}}
-
-/* Motion lines */
-.motion-lines{position:absolute;right:160px;bottom:60px;opacity:0;animation:lines-show 10s infinite}
-@keyframes lines-show{0%,49%,82%,100%{opacity:0}50%,80%{opacity:1}}
+/* Exclamation */
+.exclam{position:absolute;opacity:0;font-size:28px;font-weight:900;color:#ef4444;z-index:6}
 
 /* Text */
-.headline{font-size:1.5rem;font-weight:900;color:#1e3a5f;text-align:center}
-.sub{font-size:.95rem;color:#64748b;text-align:center;max-width:340px;line-height:1.6}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 30px;border-radius:999px;background:#1e3a5f;color:#fff;font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:700;text-decoration:none;box-shadow:0 6px 0 #0f1f33;transition:transform .12s,box-shadow .12s;margin-top:4px}
+.headline{font-size:1.4rem;font-weight:900;color:#1e3a5f;text-align:center}
+.sub{font-size:.9rem;color:#64748b;text-align:center;max-width:360px;line-height:1.6}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border-radius:999px;background:#1e3a5f;color:#fff;font-family:inherit;font-size:.9rem;font-weight:700;text-decoration:none;box-shadow:0 6px 0 #0f1f33;transition:transform .12s,box-shadow .12s;margin-top:4px;cursor:pointer;border:none}
 .btn:hover{transform:translateY(-3px);box-shadow:0 9px 0 #0f1f33}
-.btn:active{transform:translateY(4px);box-shadow:0 2px 0 #0f1f33}
-
-/* Clouds */
-.cloud{position:fixed;z-index:0;border-radius:50%;background:white;opacity:.65;animation:drift linear infinite}
 </style>
 </head>
 <body>
 
-<!-- Clouds -->
-<div class="cloud" style="top:6%;width:110px;height:30px;animation-duration:30s;animation-delay:-8s">
-  <div style="position:absolute;top:-20px;left:16px;width:48px;height:48px;background:white;border-radius:50%"></div>
-  <div style="position:absolute;top:-12px;left:52px;width:34px;height:34px;background:white;border-radius:50%"></div>
-</div>
-<div class="cloud" style="top:13%;width:80px;height:22px;animation-duration:38s;animation-delay:-18s">
-  <div style="position:absolute;top:-14px;left:14px;width:36px;height:36px;background:white;border-radius:50%"></div>
-</div>
-
-<div class="ground"></div>
-
 <div class="card">
-  <div class="num">404</div>
+  <div class="num" id="numText">404</div>
 
-  <!-- ANIMATION STRIP -->
-  <div class="scene-strip">
-    <div class="strip-ground"></div>
+  <div class="stage" id="stage">
 
-    <!-- Dropped fish emoji -->
-    <div class="fish">🐟</div>
+    <!-- Parallax background -->
+    <svg class="para-bg" id="paraBg" width="1440" height="120" viewBox="0 0 1440 120" style="bottom:70px">
+      <ellipse class="hill" cx="120" cy="110" rx="140" ry="50"/>
+      <ellipse class="hill" cx="400" cy="115" rx="100" ry="35"/>
+      <ellipse class="hill" cx="650" cy="108" rx="160" ry="55"/>
+      <ellipse class="hill" cx="900" cy="115" rx="90" ry="30"/>
+      <ellipse class="hill" cx="1150" cy="110" rx="130" ry="45"/>
+      <!-- trees -->
+      <rect class="tree-trunk" x="195" y="70" width="8" height="30" rx="3"/>
+      <circle class="tree-top" cx="199" cy="62" r="18"/>
+      <rect class="tree-trunk" x="495" y="75" width="6" height="25" rx="3"/>
+      <circle class="tree-top" cx="498" cy="68" r="14"/>
+      <rect class="tree-trunk" x="820" y="72" width="7" height="28" rx="3"/>
+      <circle class="tree-top" cx="823" cy="64" r="16"/>
+      <!-- duplicate for seamless loop -->
+      <ellipse class="hill" cx="840" cy="110" rx="140" ry="50"/>
+      <ellipse class="hill" cx="1120" cy="115" rx="100" ry="35"/>
+    </svg>
 
-    <!-- Dust puffs -->
-    <div class="dust-wrap">
-      <svg width="60" height="50" viewBox="0 0 60 50">
-        <circle class="puff1" cx="15" cy="30" r="12" fill="#d4c4a0" opacity=".7"/>
-        <circle class="puff2" cx="30" cy="25" r="9" fill="#c8b896" opacity=".6"/>
-        <circle class="puff3" cx="45" cy="28" r="7" fill="#ddd0b0" opacity=".5"/>
+    <div class="ground-detail" id="groundDetail"></div>
+    <div class="stage-ground"></div>
+
+    <!-- Characters layer -->
+    <div class="char-layer">
+
+      <!-- ── FOOD BOWL ── -->
+      <svg id="bowl" width="60" height="45" viewBox="0 0 60 45" style="position:absolute;left:170px;bottom:0">
+        <ellipse cx="30" cy="38" rx="28" ry="7" fill="#6b7280"/>
+        <path d="M2,28 Q30,46 58,28 L52,40 Q30,50 8,40Z" fill="#9ca3af"/>
+        <ellipse cx="30" cy="28" rx="28" ry="8" fill="#d1d5db"/>
+        <text x="10" y="30" font-size="14">🐟</text>
+        <text id="bowlLabel" x="7" y="20" font-size="7" fill="#4b5563" font-family="Nunito" font-weight="700">404 Data</text>
       </svg>
-    </div>
 
-    <!-- Motion lines (speed lines when dog enters) -->
-    <div class="motion-lines">
-      <svg width="80" height="40" viewBox="0 0 80 40">
-        <line x1="80" y1="8"  x2="0" y2="8"  stroke="#aaa" stroke-width="2" stroke-linecap="round" opacity=".6"/>
-        <line x1="80" y1="16" x2="10" y2="16" stroke="#aaa" stroke-width="3" stroke-linecap="round" opacity=".8"/>
-        <line x1="80" y1="24" x2="0" y2="24" stroke="#aaa" stroke-width="2" stroke-linecap="round" opacity=".6"/>
-        <line x1="80" y1="32" x2="15" y2="32" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" opacity=".5"/>
-      </svg>
-    </div>
+      <!-- ── CAT SVG ── -->
+      <g id="catWrap">
+        <svg id="catSvg" width="110" height="140" viewBox="0 0 110 140" style="position:absolute;left:120px;bottom:-5px;overflow:visible">
+          <g id="catBody">
+            <!-- Tail -->
+            <path id="catTail" d="M10,92 Q-12,70 -6,48 Q0,32 12,38" stroke="#e07030" stroke-width="8" fill="none" stroke-linecap="round"/>
+            <!-- Body -->
+            <ellipse id="catTorso" cx="55" cy="95" rx="34" ry="28" fill="#f97316"/>
+            <ellipse cx="58" cy="100" rx="20" ry="16" fill="#fde68a"/>
+            <!-- Back legs -->
+            <g id="catLegBL"><ellipse cx="28" cy="125" rx="12" ry="8" fill="#f97316"/><ellipse cx="28" cy="128" rx="10" ry="5" fill="#ea580c"/></g>
+            <g id="catLegBR"><ellipse cx="75" cy="125" rx="12" ry="8" fill="#f97316"/><ellipse cx="75" cy="128" rx="10" ry="5" fill="#ea580c"/></g>
+            <!-- Front legs -->
+            <g id="catLegFL"><rect x="34" y="118" width="14" height="20" rx="7" fill="#f97316"/><ellipse cx="41" cy="136" rx="9" ry="5" fill="#ea580c"/></g>
+            <g id="catLegFR"><rect x="62" y="118" width="14" height="20" rx="7" fill="#f97316"/><ellipse cx="69" cy="136" rx="9" ry="5" fill="#ea580c"/></g>
+            <!-- Head -->
+            <g id="catHead">
+              <circle cx="55" cy="56" r="32" fill="#f97316"/>
+              <!-- Ears -->
+              <polygon id="catEarL" points="26,40 16,8 42,30" fill="#f97316"/>
+              <polygon points="29,36 22,14 38,28" fill="#fca5a5"/>
+              <polygon id="catEarR" points="84,40 94,8 68,30" fill="#f97316"/>
+              <polygon points="81,36 88,14 72,28" fill="#fca5a5"/>
+              <!-- Eyes -->
+              <g id="catEyes">
+                <ellipse cx="42" cy="54" rx="10" ry="12" fill="white"/>
+                <ellipse cx="42" cy="56" rx="7" ry="8" fill="#16a34a"/>
+                <ellipse cx="42" cy="57" rx="4" ry="6" fill="#0f172a"/>
+                <ellipse cx="40" cy="52" rx="2.5" ry="2.5" fill="white"/>
+                <ellipse cx="68" cy="54" rx="10" ry="12" fill="white"/>
+                <ellipse cx="68" cy="56" rx="7" ry="8" fill="#16a34a"/>
+                <ellipse cx="68" cy="57" rx="4" ry="6" fill="#0f172a"/>
+                <ellipse cx="66" cy="52" rx="2.5" ry="2.5" fill="white"/>
+              </g>
+              <!-- Scared eyes (hidden) -->
+              <g id="catScaredEyes" opacity="0">
+                <ellipse cx="42" cy="52" rx="12" ry="14" fill="white"/>
+                <ellipse cx="42" cy="54" rx="4" ry="5" fill="#0f172a"/>
+                <ellipse cx="68" cy="52" rx="12" ry="14" fill="white"/>
+                <ellipse cx="68" cy="54" rx="4" ry="5" fill="#0f172a"/>
+              </g>
+              <!-- Nose -->
+              <polygon cx="55" cy="66" points="55,64 51,70 59,70" fill="#c2410c"/>
+              <!-- Mouth (normal) -->
+              <path id="catMouth" d="M48,72 Q55,78 62,72" stroke="#7c3f00" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <!-- Mouth scared (hidden) -->
+              <ellipse id="catScaredMouth" cx="55" cy="76" rx="10" ry="12" fill="#1e0f3a" opacity="0"/>
+              <!-- Whiskers -->
+              <line x1="50" y1="68" x2="18" y2="62" stroke="#92400e" stroke-width="1.5" opacity=".6"/>
+              <line x1="50" y1="70" x2="18" y2="72" stroke="#92400e" stroke-width="1.5" opacity=".6"/>
+              <line x1="60" y1="68" x2="92" y2="62" stroke="#92400e" stroke-width="1.5" opacity=".6"/>
+              <line x1="60" y1="70" x2="92" y2="72" stroke="#92400e" stroke-width="1.5" opacity=".6"/>
+              <!-- Stripes -->
+              <path d="M34,40 Q37,32 42,30" stroke="#ea6910" stroke-width="3" fill="none" stroke-linecap="round"/>
+              <path d="M76,40 Q73,32 68,30" stroke="#ea6910" stroke-width="3" fill="none" stroke-linecap="round"/>
+              <path d="M45,34 Q48,28 53,26" stroke="#ea6910" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            </g>
+          </g>
+        </svg>
+      </g>
 
-    <!-- ── CAT SVG ── -->
-    <svg class="cat" width="90" height="120" viewBox="0 0 90 120">
-      <g class="cat-eat-bob">
-        <!-- Tail -->
-        <g class="cat-tail" style="transform-origin:8px 95px">
-          <path d="M8,95 Q-15,75 -10,55 Q-6,40 5,45" stroke="#e07030" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <!-- ── DOG SVG ── -->
+      <svg id="dogSvg" width="130" height="140" viewBox="0 0 130 140" style="position:absolute;right:-180px;bottom:-5px;overflow:visible">
+        <g id="dogBody">
+          <!-- Tail -->
+          <path id="dogTail" d="M5,65 Q-10,45 -2,25 Q4,12 14,18" stroke="#b45309" stroke-width="9" fill="none" stroke-linecap="round"/>
+          <!-- Body -->
+          <ellipse id="dogTorso" cx="62" cy="90" rx="42" ry="30" fill="#d97706"/>
+          <ellipse cx="66" cy="95" rx="24" ry="18" fill="#fde68a"/>
+          <!-- Back legs -->
+          <g id="dogLegBL"><rect x="18" y="115" width="18" height="22" rx="9" fill="#d97706"/><ellipse cx="27" cy="135" rx="12" ry="6" fill="#b45309"/></g>
+          <g id="dogLegBR"><rect x="80" y="115" width="18" height="22" rx="9" fill="#d97706"/><ellipse cx="89" cy="135" rx="12" ry="6" fill="#b45309"/></g>
+          <!-- Front legs -->
+          <g id="dogLegFL"><rect x="38" y="115" width="16" height="22" rx="8" fill="#d97706"/><ellipse cx="46" cy="135" rx="11" ry="6" fill="#b45309"/></g>
+          <g id="dogLegFR"><rect x="68" y="115" width="16" height="22" rx="8" fill="#d97706"/><ellipse cx="76" cy="135" rx="11" ry="6" fill="#b45309"/></g>
+          <!-- Head -->
+          <g id="dogHead">
+            <circle cx="62" cy="50" r="36" fill="#d97706"/>
+            <!-- Floppy ears -->
+            <ellipse id="dogEarL" cx="28" cy="62" rx="16" ry="24" fill="#b45309" transform="rotate(15,28,62)"/>
+            <ellipse id="dogEarR" cx="96" cy="62" rx="16" ry="24" fill="#b45309" transform="rotate(-15,96,62)"/>
+            <!-- Eyes (excited) -->
+            <ellipse cx="48" cy="46" rx="10" ry="12" fill="white"/>
+            <ellipse cx="48" cy="48" rx="7" ry="8" fill="#1e0f3a"/>
+            <ellipse cx="46" cy="44" rx="3" ry="3" fill="white"/>
+            <ellipse cx="76" cy="46" rx="10" ry="12" fill="white"/>
+            <ellipse cx="76" cy="48" rx="7" ry="8" fill="#1e0f3a"/>
+            <ellipse cx="74" cy="44" rx="3" ry="3" fill="white"/>
+            <!-- Eyebrows (angry) -->
+            <line id="dogBrowL" x1="38" y1="34" x2="54" y2="32" stroke="#7c2d12" stroke-width="3.5" stroke-linecap="round"/>
+            <line id="dogBrowR" x1="86" y1="34" x2="70" y2="32" stroke="#7c2d12" stroke-width="3.5" stroke-linecap="round"/>
+            <!-- Big nose -->
+            <ellipse cx="62" cy="62" rx="14" ry="10" fill="#1e0f3a"/>
+            <ellipse cx="58" cy="60" rx="3.5" ry="2.5" fill="rgba(255,255,255,.3)"/>
+            <!-- Tongue -->
+            <g id="dogTongue">
+              <path d="M52,72 Q62,88 72,72" fill="#f43f5e" stroke="#e11d48" stroke-width="1.5"/>
+            </g>
+            <!-- Teeth -->
+            <rect x="50" y="68" width="6" height="7" rx="2" fill="white"/>
+            <rect x="68" y="68" width="6" height="7" rx="2" fill="white"/>
+          </g>
         </g>
-        <!-- Body -->
-        <ellipse cx="45" cy="90" rx="32" ry="25" fill="#f97316"/>
-        <!-- Belly -->
-        <ellipse cx="48" cy="95" rx="18" ry="14" fill="#fde68a"/>
-        <!-- Head -->
-        <circle cx="45" cy="52" r="30" fill="#f97316"/>
-        <!-- Left ear -->
-        <polygon points="18,35 10,8 32,28" fill="#f97316"/>
-        <polygon points="21,32 16,14 30,26" fill="#fca5a5"/>
-        <!-- Right ear -->
-        <polygon points="72,35 80,8 58,28" fill="#f97316"/>
-        <polygon points="69,32 74,14 60,26" fill="#fca5a5"/>
-        <!-- Eyes -->
-        <ellipse cx="35" cy="50" rx="9" ry="10" fill="white"/>
-        <ellipse cx="35" cy="52" rx="6" ry="7" fill="#16a34a"/>
-        <ellipse cx="35" cy="53" rx="3" ry="5" fill="#0f172a"/>
-        <ellipse cx="33" cy="49" rx="2" ry="2" fill="white"/>
-        <ellipse class="cat-eye" cx="35" cy="47" rx="9" ry="10" fill="#f97316"/>
+      </svg>
 
-        <ellipse cx="55" cy="50" rx="9" ry="10" fill="white"/>
-        <ellipse cx="55" cy="52" rx="6" ry="7" fill="#16a34a"/>
-        <ellipse cx="55" cy="53" rx="3" ry="5" fill="#0f172a"/>
-        <ellipse cx="53" cy="49" rx="2" ry="2" fill="white"/>
-        <ellipse class="cat-eye" cx="55" cy="47" rx="9" ry="10" fill="#f97316"/>
-        <!-- Nose -->
-        <polygon points="45,61 42,66 48,66" fill="#c2410c"/>
-        <!-- Whiskers left -->
-        <line x1="45" y1="64" x2="14" y2="60" stroke="#7c3f00" stroke-width="1.5" opacity=".7"/>
-        <line x1="45" y1="66" x2="14" y2="68" stroke="#7c3f00" stroke-width="1.5" opacity=".7"/>
-        <!-- Whiskers right -->
-        <line x1="45" y1="64" x2="76" y2="60" stroke="#7c3f00" stroke-width="1.5" opacity=".7"/>
-        <line x1="45" y1="66" x2="76" y2="68" stroke="#7c3f00" stroke-width="1.5" opacity=".7"/>
-        <!-- Stripes -->
-        <path d="M28,38 Q30,32 34,30" stroke="#ea6910" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-        <path d="M62,38 Q60,32 56,30" stroke="#ea6910" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-        <!-- Legs front -->
-        <rect class="cat-leg-f" x="28" y="112" width="14" height="14" rx="7" fill="#f97316" style="transform-origin:35px 112px"/>
-        <rect class="cat-leg-b" x="48" y="112" width="14" height="14" rx="7" fill="#f97316" style="transform-origin:55px 112px"/>
-        <!-- Paws -->
-        <ellipse cx="35" cy="118" rx="9" ry="6" fill="#f97316"/>
-        <ellipse cx="55" cy="118" rx="9" ry="6" fill="#f97316"/>
-      </g>
+    </div><!-- /char-layer -->
+
+    <!-- Exclamation -->
+    <div class="exclam" id="exclam" style="left:155px;top:20px">‼️</div>
+
+    <!-- Dust clouds -->
+    <svg class="dust-group" id="dustG" width="80" height="50" viewBox="0 0 80 50" style="left:200px;bottom:70px">
+      <circle id="d1" cx="15" cy="30" r="14" fill="#c4a882" opacity=".5"/>
+      <circle id="d2" cx="35" cy="22" r="10" fill="#d4b892" opacity=".4"/>
+      <circle id="d3" cx="55" cy="28" r="8" fill="#b89878" opacity=".3"/>
     </svg>
 
-    <!-- ── DOG SVG ── -->
-    <svg class="dog" width="110" height="120" viewBox="0 0 110 120">
-      <!-- Tail -->
-      <g class="dog-tail" style="transform-origin:5px 60px">
-        <path d="M5,60 Q-12,40 -5,22 Q0,10 10,15" stroke="#b45309" stroke-width="8" fill="none" stroke-linecap="round"/>
-      </g>
-      <!-- Body -->
-      <ellipse cx="52" cy="88" rx="38" ry="26" fill="#d97706"/>
-      <!-- Chest lighter patch -->
-      <ellipse cx="56" cy="92" rx="20" ry="16" fill="#fde68a"/>
-      <!-- Head -->
-      <circle cx="52" cy="48" r="32" fill="#d97706"/>
-      <!-- Floppy ears -->
-      <ellipse cx="22" cy="60" rx="14" ry="20" fill="#b45309" transform="rotate(15,22,60)"/>
-      <ellipse cx="82" cy="60" rx="14" ry="20" fill="#b45309" transform="rotate(-15,82,60)"/>
-      <!-- Eyes (excited big) -->
-      <ellipse cx="40" cy="44" rx="9" ry="10" fill="white"/>
-      <ellipse cx="40" cy="46" rx="6" ry="7" fill="#1e0f3a"/>
-      <ellipse cx="38" cy="42" rx="2.5" ry="2.5" fill="white"/>
-      <ellipse cx="64" cy="44" rx="9" ry="10" fill="white"/>
-      <ellipse cx="64" cy="46" rx="6" ry="7" fill="#1e0f3a"/>
-      <ellipse cx="62" cy="42" rx="2.5" ry="2.5" fill="white"/>
-      <!-- Big nose -->
-      <ellipse cx="52" cy="60" rx="12" ry="9" fill="#1e0f3a"/>
-      <ellipse cx="49" cy="58" rx="3" ry="2" fill="rgba(255,255,255,.3)"/>
-      <!-- Tongue -->
-      <g class="dog-tongue" style="transform-origin:52px 68px">
-        <path d="M44,68 Q52,80 60,68" fill="#f43f5e" stroke="#e11d48" stroke-width="1.5"/>
-      </g>
-      <!-- Legs -->
-      <rect class="dog-leg-f" x="30" y="110" width="16" height="16" rx="8" fill="#d97706" style="transform-origin:38px 110px"/>
-      <rect class="dog-leg-b" x="56" y="110" width="16" height="16" rx="8" fill="#d97706" style="transform-origin:64px 110px"/>
-      <ellipse cx="38" cy="118" rx="11" ry="7" fill="#b45309"/>
-      <ellipse cx="64" cy="118" rx="11" ry="7" fill="#b45309"/>
+    <!-- Speed lines -->
+    <svg class="speed-lines" id="speedLines" width="100" height="60" viewBox="0 0 100 60">
+      <line x1="100" y1="10" x2="0" y2="10" stroke="#999" stroke-width="2" stroke-linecap="round"/>
+      <line x1="100" y1="22" x2="8" y2="22" stroke="#999" stroke-width="3" stroke-linecap="round"/>
+      <line x1="100" y1="34" x2="0" y2="34" stroke="#999" stroke-width="2" stroke-linecap="round"/>
+      <line x1="100" y1="46" x2="12" y2="46" stroke="#999" stroke-width="1.5" stroke-linecap="round"/>
     </svg>
+  </div>
 
-    <!-- ── FOOD BOWL ── -->
-    <svg class="bowl" width="60" height="50" viewBox="0 0 60 50">
-      <ellipse cx="30" cy="40" rx="28" ry="10" fill="#6b7280"/>
-      <path d="M2,30 Q30,50 58,30 L52,44 Q30,56 8,44Z" fill="#9ca3af"/>
-      <ellipse cx="30" cy="30" rx="28" ry="10" fill="#d1d5db"/>
-      <!-- Fish in bowl -->
-      <text x="12" y="32" font-size="18">🐟</text>
-    </svg>
-
-  </div><!-- /scene-strip -->
-
-  <h1 class="headline">The page ran away! 😱</h1>
-  <p class="sub">A dog chased it off. It was last seen running at full speed somewhere over the horizon.</p>
-  <a href="javascript:history.back()" class="btn">← Take me back</a>
+  <h1 class="headline">Oops! The page got chased away! 😱</h1>
+  <p class="sub">A dog burst in and scared the page off. It was last seen running at full speed over the horizon…</p>
+  <button class="btn" onclick="location.reload()">🔄 Replay</button>
+  <a href="javascript:history.back()" class="btn" style="background:#64748b;box-shadow:0 6px 0 #334155">← Go back</a>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script>
-// Paw prints on ground
-for(let i=0;i<5;i++){
-  const p=document.createElement('div');
-  p.style.cssText=`position:fixed;bottom:${20+Math.random()*60}px;left:${8+i*18}%;font-size:${14+Math.random()*8}px;opacity:.25;z-index:2;transform:rotate(${Math.random()*30-15}deg)`;
-  p.textContent='🐾';document.body.appendChild(p);
+const catSvg=document.getElementById('catSvg');
+const dogSvg=document.getElementById('dogSvg');
+
+// ── IDLE ANIMATIONS (cat eating peacefully) ──
+// Cat head bob (eating)
+const eatBob=gsap.timeline({repeat:-1,yoyo:true});
+eatBob.to('#catHead',{y:4,rotate:3,transformOrigin:'55px 56px',duration:.3,ease:'power1.inOut'})
+  .to('#catHead',{y:0,rotate:-1,duration:.25,ease:'power1.inOut'});
+
+// Cat tail swish
+gsap.to('#catTail',{attr:{d:'M10,92 Q-18,75 -10,48 Q-2,28 14,35'},duration:1,yoyo:true,repeat:-1,ease:'sine.inOut'});
+
+// Cat blink
+function catBlink(){
+  const tl=gsap.timeline({onComplete:()=>gsap.delayedCall(1.5+Math.random()*2,catBlink)});
+  tl.to('#catEyes',{scaleY:.05,transformOrigin:'50% 55px',duration:.06})
+    .to('#catEyes',{scaleY:1,duration:.08},'+=.04');
 }
+catBlink();
+
+// Dog tail wag (even off-screen)
+gsap.to('#dogTail',{attr:{d:'M5,65 Q-15,48 -5,22 Q6,8 18,15'},duration:.2,yoyo:true,repeat:-1,ease:'power1.inOut'});
+
+// Dog tongue wag
+gsap.to('#dogTongue',{rotate:8,transformOrigin:'62px 72px',duration:.2,yoyo:true,repeat:-1});
+
+// Dog ear flop
+gsap.to('#dogEarL',{rotate:20,transformOrigin:'28px 50px',duration:.3,yoyo:true,repeat:-1,ease:'sine.inOut'});
+gsap.to('#dogEarR',{rotate:-20,transformOrigin:'96px 50px',duration:.3,yoyo:true,repeat:-1,ease:'sine.inOut',delay:.15});
+
+// ── MASTER STORYBOARD TIMELINE ──
+const master=gsap.timeline({delay:2});
+
+// === ACT 1: DOG ENTERS (anticipation lunge) ===
+master.to('#numText',{scale:1.05,duration:.1,yoyo:true,repeat:1},'dogEnter') // screen shake
+  .to(dogSvg,{right:'calc(100% - 320px)',duration:.6,ease:'back.out(1.2)'},'dogEnter')
+  // Dog squash on arrival
+  .to('#dogBody',{scaleX:1.3,scaleY:.7,transformOrigin:'50% 100%',duration:.08},'dogEnter+=.55')
+  .to('#dogBody',{scaleX:.85,scaleY:1.15,duration:.1,ease:'elastic.out(1,.6)'})
+  .to('#dogBody',{scaleX:1,scaleY:1,duration:.3,ease:'elastic.out(1,.5)'})
+
+  // Speed lines appear
+  .to('#speedLines',{opacity:.8,duration:.1},'dogEnter')
+  .to('#speedLines',{opacity:0,duration:.4},'dogEnter+=.5')
+
+// === ACT 2: CAT STARTLES ===
+  // Stop eating animation
+  .call(()=>eatBob.pause())
+
+  // Exclamation mark pops
+  .to('#exclam',{opacity:1,y:-10,scale:1.3,duration:.15,ease:'back.out(3)'},'scare')
+  .to('#exclam',{opacity:0,y:-30,duration:.4},'scare+=.6')
+
+  // Cat eyes go scared (swap)
+  .to('#catEyes',{opacity:0,duration:.05},'scare')
+  .to('#catScaredEyes',{opacity:1,duration:.05},'scare')
+  // Cat mouth goes to scared O
+  .to('#catMouth',{opacity:0,duration:.05},'scare')
+  .to('#catScaredMouth',{opacity:1,duration:.05},'scare')
+
+  // Cat fur spike (ears puff out, body scales)
+  .to('#catTorso',{scaleY:.7,scaleX:1.4,transformOrigin:'50% 100%',duration:.08,ease:'power4.out'},'scare')
+  .to('#catEarL',{attr:{points:'20,35 4,0 44,25'},duration:.1},'scare')
+  .to('#catEarR',{attr:{points:'90,35 106,0 66,25'},duration:.1},'scare')
+  // Squash back
+  .to('#catTorso',{scaleY:1.2,scaleX:.8,duration:.1},'scare+=.1')
+  .to('#catTorso',{scaleY:1,scaleX:1,duration:.2,ease:'elastic.out(1,.6)'},'scare+=.2')
+
+  // Cat jumps up
+  .to(catSvg,{y:-30,duration:.15,ease:'power2.out'},'scare+=.05')
+  .to(catSvg,{y:0,duration:.2,ease:'bounce.out'},'scare+=.2')
+
+// === ACT 3: BURNOUT (running in place) ===
+  .to({},{duration:.3}) // beat
+
+  // Cat legs blur cycle (running in place before taking off)
+  .call(()=>{
+    gsap.to('#catLegFL',{rotate:40,transformOrigin:'41px 118px',duration:.06,yoyo:true,repeat:11,ease:'none'});
+    gsap.to('#catLegFR',{rotate:-40,transformOrigin:'69px 118px',duration:.06,yoyo:true,repeat:11,ease:'none'});
+    gsap.to('#catLegBL',{rotate:35,transformOrigin:'28px 118px',duration:.06,yoyo:true,repeat:11,ease:'none'});
+    gsap.to('#catLegBR',{rotate:-35,transformOrigin:'75px 118px',duration:.06,yoyo:true,repeat:11,ease:'none'});
+  })
+
+  // Dust clouds appear during burnout
+  .to('#dustG',{opacity:1,duration:.1},'burnout')
+  .to('#d1',{scale:1.8,opacity:0,transformOrigin:'50% 50%',duration:.4,repeat:3,repeatDelay:.1},'burnout')
+  .to('#d2',{scale:2,opacity:0,transformOrigin:'50% 50%',duration:.4,repeat:3,repeatDelay:.1,delay:.1},'burnout')
+  .to('#d3',{scale:1.6,opacity:0,transformOrigin:'50% 50%',duration:.4,repeat:3,repeatDelay:.1,delay:.2},'burnout')
+
+// === ACT 4: CHASE — both run off screen left with parallax ===
+  .to({},{duration:.8},'chase')
+  .call(()=>{
+    // Start parallax
+    document.getElementById('paraBg').classList.add('running');
+    document.getElementById('groundDetail').classList.add('running');
+    // Dog running legs
+    gsap.to('#dogLegFL',{rotate:40,transformOrigin:'46px 115px',duration:.08,yoyo:true,repeat:20,ease:'none'});
+    gsap.to('#dogLegFR',{rotate:-40,transformOrigin:'76px 115px',duration:.08,yoyo:true,repeat:20,ease:'none'});
+    gsap.to('#dogLegBL',{rotate:35,transformOrigin:'27px 115px',duration:.08,yoyo:true,repeat:20,ease:'none'});
+    gsap.to('#dogLegBR',{rotate:-35,transformOrigin:'89px 115px',duration:.08,yoyo:true,repeat:20,ease:'none'});
+  },'chase')
+
+  // Cat zooms left
+  .to(catSvg,{left:'-200px',duration:1.8,ease:'power2.in'},'chase')
+  // Bowl flies
+  .to('#bowl',{left:'-100px',rotate:-30,duration:1.2,ease:'power2.in'},'chase+=.2')
+  // Dog chases
+  .to(dogSvg,{right:'calc(100% + 200px)',duration:2,ease:'power2.in'},'chase+=.4')
+  .to('#dustG',{opacity:0,duration:.3},'chase+=1.5')
+
+  // Stop parallax
+  .call(()=>{
+    document.getElementById('paraBg').classList.remove('running');
+    document.getElementById('groundDetail').classList.remove('running');
+  })
+
+  // === PAWS left behind ===
+  .call(()=>{
+    for(let i=0;i<6;i++){
+      const p=document.createElement('div');
+      p.style.cssText=`position:absolute;bottom:72px;left:${80+i*80}px;font-size:${16+Math.random()*6}px;opacity:.3;z-index:4;transform:rotate(${Math.random()*20-10}deg)`;
+      p.textContent='🐾';
+      document.getElementById('stage').appendChild(p);
+      gsap.from(p,{opacity:0,scale:0,duration:.3,delay:i*.15,ease:'back.out(2)'});
+    }
+  });
 </script>
 </body>
 </html>

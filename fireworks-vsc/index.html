@@ -24,84 +24,125 @@
   #kid-wrap {
     position: fixed;
     bottom: 0;
-    left: 20px;
-    width: 120px;
+    left: 16px;
+    width: 140px;
     z-index: 50;
     pointer-events: none;
-    transform-origin: bottom center;
+    overflow: visible;
   }
-  #kid-img {
-    width: 100%;
-    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
-    transition: transform 0.15s ease;
-  }
-  /* Idle bob */
-  @keyframes kid-idle {
-    0%,100% { transform: translateY(0) rotate(0deg); }
-    50%      { transform: translateY(-4px) rotate(1deg); }
-  }
-  /* Shock — grab ears */
-  @keyframes kid-shock {
-    0%   { transform: translateY(-16px) rotate(-6deg) scale(1.1); }
-    30%  { transform: translateY(-22px) rotate(6deg) scale(1.15); }
-    60%  { transform: translateY(-10px) rotate(-3deg) scale(1.08); }
-    100% { transform: translateY(0) rotate(0deg) scale(1); }
-  }
-  /* KO — spin and fall */
-  @keyframes kid-ko {
-    0%   { transform: rotate(0deg) scale(1); }
-    25%  { transform: rotate(180deg) scale(1.2) translateY(-30px); }
-    50%  { transform: rotate(360deg) scale(0.9) translateY(-10px); }
-    75%  { transform: rotate(480deg) scale(1.05) translateY(-5px); }
-    100% { transform: rotate(540deg) scale(1) translateY(0); }
-  }
-  /* Stars circling over head */
-  .ko-stars {
-    position: absolute;
-    top: -24px; left: 50%;
-    transform: translateX(-50%);
-    font-size: 16px;
-    animation: star-orbit 0.6s linear infinite;
-    display: none;
-  }
-  @keyframes star-orbit {
-    to { transform: translateX(-50%) rotate(360deg); }
-  }
-  /* Speech bubble from kid */
   .kid-bubble {
     position: absolute;
-    top: -50px; left: 110%;
+    top: -10px; left: 130px;
     background: white;
     border-radius: 12px;
-    padding: 5px 10px;
+    padding: 5px 12px;
     font-size: 11px;
     font-weight: 700;
     color: #1a1a2e;
     white-space: nowrap;
     opacity: 0;
-    transition: opacity 0.2s;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 10px rgba(0,0,0,.35);
     font-family: Inter, system-ui;
+    z-index: 60;
   }
   .kid-bubble::before {
     content: '';
     position: absolute;
-    left: -8px; top: 50%;
+    left: -7px; top: 50%;
     transform: translateY(-50%);
-    border: 8px solid transparent;
+    border: 7px solid transparent;
     border-right-color: white;
     border-left: none;
   }
-  .kid-bubble.show { opacity: 1; }
+  .ko-stars {
+    position: absolute;
+    top: 10px; left: 50%;
+    font-size: 14px;
+    opacity: 0;
+  }
 </style>
 </head>
 <body>
-<!-- Kid character -->
+<!-- Kid character (SVG — fully GSAP targetable) -->
 <div id="kid-wrap">
-  <div class="ko-stars" id="koStars">⭐ 💫 ⭐</div>
+  <div class="ko-stars" id="koStars">⭐💫⭐</div>
   <div class="kid-bubble" id="kidBubble">Wah! 😱</div>
-  <img id="kid-img" src="kid_character.png" alt="Kid watching fireworks">
+  <svg id="kidSvg" width="140" height="220" viewBox="0 0 140 220" style="overflow:visible">
+    <!-- Shadow -->
+    <ellipse cx="70" cy="215" rx="35" ry="6" fill="rgba(0,0,0,.2)"/>
+    <!-- ── LEGS ── -->
+    <g id="kidLegL"><rect x="46" y="162" width="16" height="45" rx="8" fill="#d97706"/><ellipse cx="54" cy="208" rx="14" ry="7" fill="#92400e"/></g>
+    <g id="kidLegR"><rect x="78" y="162" width="16" height="45" rx="8" fill="#d97706"/><ellipse cx="86" cy="208" rx="14" ry="7" fill="#92400e"/></g>
+    <!-- ── BODY ── -->
+    <g id="kidBodyG">
+      <!-- Kurta body -->
+      <path d="M42,98 Q36,120 38,165 L102,165 Q104,120 98,98 Q85,90 70,88 Q55,90 42,98Z" fill="#e11d48"/>
+      <!-- Kurta pattern -->
+      <line x1="70" y1="100" x2="70" y2="160" stroke="#be123c" stroke-width="2" opacity=".4"/>
+      <path d="M48,145 L92,145" stroke="#be123c" stroke-width="1.5" opacity=".3"/>
+      <!-- Collar -->
+      <path d="M55,98 Q70,108 85,98" fill="none" stroke="#be123c" stroke-width="2.5"/>
+    </g>
+    <!-- ── LEFT ARM ── -->
+    <g id="kidArmL">
+      <path d="M42,102 Q24,115 18,140 Q15,150 24,154 Q32,156 36,144 Q42,125 48,112Z" fill="#e11d48"/>
+      <ellipse cx="22" cy="156" rx="10" ry="9" fill="#fcd9a0"/>
+    </g>
+    <!-- ── RIGHT ARM ── -->
+    <g id="kidArmR">
+      <path d="M98,102 Q116,115 122,140 Q125,150 116,154 Q108,156 104,144 Q98,125 92,112Z" fill="#e11d48"/>
+      <ellipse cx="118" cy="156" rx="10" ry="9" fill="#fcd9a0"/>
+    </g>
+    <!-- ── HEAD ── -->
+    <g id="kidHeadG">
+      <!-- Neck -->
+      <rect x="62" y="76" width="16" height="22" rx="6" fill="#fcd9a0"/>
+      <!-- Head -->
+      <circle cx="70" cy="52" r="34" fill="#fcd9a0"/>
+      <!-- Hair -->
+      <path d="M36,46 Q38,18 70,12 Q102,18 104,46 Q96,30 82,34 Q70,22 58,34 Q44,30 36,46Z" fill="#1e0f3a"/>
+      <!-- Eyes normal -->
+      <g id="kidEyesNormal">
+        <ellipse cx="56" cy="52" rx="8" ry="9" fill="white"/>
+        <ellipse cx="56" cy="54" rx="5" ry="6" fill="#1e0f3a"/>
+        <ellipse cx="54" cy="50" rx="2" ry="2" fill="white"/>
+        <ellipse cx="84" cy="52" rx="8" ry="9" fill="white"/>
+        <ellipse cx="84" cy="54" rx="5" ry="6" fill="#1e0f3a"/>
+        <ellipse cx="82" cy="50" rx="2" ry="2" fill="white"/>
+      </g>
+      <!-- Eyes scared (big pupils, hidden) -->
+      <g id="kidEyesScared" opacity="0">
+        <ellipse cx="56" cy="50" rx="10" ry="12" fill="white"/>
+        <ellipse cx="56" cy="52" rx="3" ry="4" fill="#1e0f3a"/>
+        <ellipse cx="84" cy="50" rx="10" ry="12" fill="white"/>
+        <ellipse cx="84" cy="52" rx="3" ry="4" fill="#1e0f3a"/>
+      </g>
+      <!-- Eyes KO (X X, hidden) -->
+      <g id="kidEyesKO" opacity="0">
+        <line x1="50" y1="46" x2="62" y2="58" stroke="#1e0f3a" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="62" y1="46" x2="50" y2="58" stroke="#1e0f3a" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="78" y1="46" x2="90" y2="58" stroke="#1e0f3a" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="90" y1="46" x2="78" y2="58" stroke="#1e0f3a" stroke-width="3.5" stroke-linecap="round"/>
+      </g>
+      <!-- Mouth normal -->
+      <path id="kidMouth" d="M60,68 Q70,74 80,68" stroke="#c06060" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <!-- Mouth scared O (hidden) -->
+      <ellipse id="kidMouthScared" cx="70" cy="72" rx="8" ry="10" fill="#1e0f3a" opacity="0"/>
+      <!-- Tongue out for KO (hidden) -->
+      <g id="kidTongueKO" opacity="0">
+        <ellipse cx="70" cy="72" rx="6" ry="8" fill="#1e0f3a"/>
+        <path d="M66,76 Q70,88 74,76" fill="#f43f5e"/>
+      </g>
+      <!-- Ears -->
+      <ellipse cx="36" cy="56" rx="7" ry="10" fill="#f0c490"/>
+      <ellipse cx="104" cy="56" rx="7" ry="10" fill="#f0c490"/>
+      <!-- Blush -->
+      <ellipse id="kidBlushL" cx="44" cy="64" rx="10" ry="6" fill="#ffaac8" opacity=".4"/>
+      <ellipse id="kidBlushR" cx="96" cy="64" rx="10" ry="6" fill="#ffaac8" opacity=".4"/>
+    </g>
+  </svg>
 </div>
+
 
 <div id="app">
   <canvas id="c"></canvas>
@@ -681,87 +722,132 @@
 
 })();
 
-// ── Kid character reaction system ──────────────────────────────────────
+// ── KID CHARACTER — GSAP REACTION SYSTEM ──────────────────────────────
 (function() {
-  const kidWrap   = document.getElementById('kid-wrap');
-  const kidImg    = document.getElementById('kid-img');
-  const koStars   = document.getElementById('koStars');
-  const kidBubble = document.getElementById('kidBubble');
+  // Load GSAP dynamically
+  const gs = document.createElement('script');
+  gs.src = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js';
+  gs.onload = initKid;
+  document.head.appendChild(gs);
 
-  let recentExplosions = 0;
-  let koTimeout = null;
-  let bubbleTimeout = null;
-  let idleAnim = null;
+  function initKid() {
+    const kidBubble = document.getElementById('kidBubble');
+    const koStars   = document.getElementById('koStars');
 
-  const shockMessages = [
-    'Wah! 😱', 'Aiyaa!! 🙉', 'My ears!! 🔥',
-    'Not again!! 😭', 'Aiiii!! 💥', 'Baap re!! 👂'
-  ];
-  const koMessages = [
-    '💫 x_x 💫', 'Too many!! 😵', 'I give up!! 🌀',
-    'KO!! 💀', 'OVERLOAD!! 🤯'
-  ];
+    const shockMsgs = ['Wah! 😱','My ears!! 🙉','Aiyaa!! 💥','Not again! 😭','Baap re! 👂','Too loud!! 🔊'];
+    const koMsgs    = ['💫 x_x 💫','KO!! 💀','OVERLOAD 🤯','I give up! 😵','Help!! 🌀'];
 
-  // Start idle bob animation
-  function setIdle() {
-    kidImg.style.animation = 'kid-idle 2.4s ease-in-out infinite';
-    koStars.style.display = 'none';
-  }
-  setIdle();
+    let state = 'idle';
+    let recentCount = 0;
+    let resetTimer = null;
 
-  function showBubble(msg) {
-    kidBubble.textContent = msg;
-    kidBubble.classList.add('show');
-    clearTimeout(bubbleTimeout);
-    bubbleTimeout = setTimeout(() => kidBubble.classList.remove('show'), 1600);
-  }
+    // ── IDLE: gentle breathing + blush pulse ──
+    gsap.to('#kidBodyG',{scaleY:1.02,transformOrigin:'70px 165px',duration:1.4,yoyo:true,repeat:-1,ease:'sine.inOut'});
+    gsap.to('#kidBlushL,#kidBlushR',{opacity:.65,duration:1.6,yoyo:true,repeat:-1,ease:'sine.inOut'});
 
-  function doShock() {
-    // Single firework — grab ears, jump in fright
-    kidImg.style.animation = 'none';
-    void kidImg.offsetWidth;
-    kidImg.style.animation = 'kid-shock 0.8s ease-out forwards';
-    showBubble(shockMessages[Math.floor(Math.random() * shockMessages.length)]);
-    clearTimeout(koTimeout);
-    koTimeout = setTimeout(setIdle, 900);
-  }
-
-  function doKO() {
-    // Multiple fireworks — spin, fall, circling stars
-    kidImg.style.animation = 'none';
-    void kidImg.offsetWidth;
-    kidImg.style.animation = 'kid-ko 1.2s ease-out forwards';
-    koStars.style.display = 'block';
-    showBubble(koMessages[Math.floor(Math.random() * koMessages.length)]);
-    clearTimeout(koTimeout);
-    koTimeout = setTimeout(() => { setIdle(); }, 1400);
-  }
-
-  // Intercept rocket launches to count explosions per window
-  let explosionWindow = 0;
-  const origPush = rockets.push.bind(rockets);
-  // Patch: listen to explosion events via a custom counter
-  // We hook into the global `rockets` array's length changes
-  const launchBtn2 = document.getElementById('launchBtn');
-  const canvasEl   = document.getElementById('c');
-
-  function onFireworkLaunched() {
-    explosionWindow++;
-    if (explosionWindow === 1) {
-      doShock();
-    } else if (explosionWindow >= 3) {
-      doKO();
+    function showBubble(msg) {
+      kidBubble.textContent = msg;
+      gsap.killTweensOf(kidBubble);
+      gsap.fromTo(kidBubble,{opacity:0,x:-10,scale:.8},{opacity:1,x:0,scale:1,duration:.25,ease:'back.out(2)'});
+      gsap.to(kidBubble,{opacity:0,delay:1.6,duration:.3});
     }
-    clearTimeout(window._kidReset);
-    window._kidReset = setTimeout(() => { explosionWindow = 0; }, 2000);
+
+    function resetToIdle() {
+      state = 'idle';
+      const tl = gsap.timeline();
+      // Reset eyes
+      tl.to('#kidEyesNormal',{opacity:1,duration:.15},0)
+        .to('#kidEyesScared,#kidEyesKO',{opacity:0,duration:.1},0)
+        .to('#kidMouth',{opacity:1,duration:.1},0)
+        .to('#kidMouthScared,#kidTongueKO',{opacity:0,duration:.1},0)
+        // Reset arms
+        .to('#kidArmL',{rotate:0,transformOrigin:'48px 102px',duration:.4,ease:'elastic.out(1,.6)'},0)
+        .to('#kidArmR',{rotate:0,transformOrigin:'92px 102px',duration:.4,ease:'elastic.out(1,.6)'},0)
+        // Reset body
+        .to('#kidSvg',{scaleX:1,scaleY:1,y:0,rotate:0,transformOrigin:'70px 220px',duration:.4,ease:'elastic.out(1,.5)'},0)
+        // Stars gone
+        .to(koStars,{opacity:0,duration:.2},0);
+    }
+
+    // ── SHOCK: cover ears, squash jump, scared face ──
+    function doShock() {
+      if (state === 'ko') return;
+      state = 'shock';
+      showBubble(shockMsgs[~~(Math.random()*shockMsgs.length)]);
+
+      const tl = gsap.timeline({onComplete:()=>gsap.delayedCall(.6,resetToIdle)});
+
+      // Scared face
+      tl.to('#kidEyesNormal',{opacity:0,duration:.04},0)
+        .to('#kidEyesScared',{opacity:1,duration:.04},0)
+        .to('#kidMouth',{opacity:0,duration:.04},0)
+        .to('#kidMouthScared',{opacity:1,duration:.04},0)
+
+        // Jump up + squash
+        .to('#kidSvg',{y:-20,scaleY:1.15,scaleX:.88,transformOrigin:'70px 220px',duration:.1,ease:'power3.out'},.02)
+        .to('#kidSvg',{y:0,scaleY:.88,scaleX:1.12,duration:.12,ease:'power2.in'},.14)
+        .to('#kidSvg',{scaleY:1,scaleX:1,duration:.35,ease:'elastic.out(1,.5)'},.26)
+
+        // Arms cover ears
+        .to('#kidArmL',{rotate:-65,transformOrigin:'48px 102px',duration:.15,ease:'power3.out'},.02)
+        .to('#kidArmR',{rotate:65,transformOrigin:'92px 102px',duration:.15,ease:'power3.out'},.02)
+
+        // Head shake
+        .to('#kidHeadG',{rotate:-5,transformOrigin:'70px 52px',duration:.06},.15)
+        .to('#kidHeadG',{rotate:5,duration:.06},.21)
+        .to('#kidHeadG',{rotate:-3,duration:.06},.27)
+        .to('#kidHeadG',{rotate:0,duration:.1,ease:'power2.out'},.33)
+
+        // Blush flares
+        .to('#kidBlushL,#kidBlushR',{opacity:.9,duration:.1},.05);
+    }
+
+    // ── KO: pancake fall, X eyes, tongue, circling stars ──
+    function doKO() {
+      state = 'ko';
+      showBubble(koMsgs[~~(Math.random()*koMsgs.length)]);
+
+      const tl = gsap.timeline({onComplete:()=>gsap.delayedCall(1.5,resetToIdle)});
+
+      // X eyes + tongue
+      tl.to('#kidEyesNormal,#kidEyesScared',{opacity:0,duration:.04},0)
+        .to('#kidEyesKO',{opacity:1,duration:.04},0)
+        .to('#kidMouth,#kidMouthScared',{opacity:0,duration:.04},0)
+        .to('#kidTongueKO',{opacity:1,duration:.04},0)
+
+        // Spin + pancake
+        .to('#kidSvg',{rotate:360,y:-30,scaleY:1.2,scaleX:.8,transformOrigin:'70px 110px',duration:.4,ease:'power2.out'},.05)
+        .to('#kidSvg',{rotate:540,y:0,scaleY:.5,scaleX:1.6,duration:.3,ease:'bounce.out'},.45)
+
+        // Circling stars
+        .to(koStars,{opacity:1,duration:.1},.5)
+        .to(koStars,{rotation:360,transformOrigin:'-20px -20px',duration:.8,repeat:3,ease:'none'},.5)
+
+        // Legs go floppy
+        .to('#kidLegL',{rotate:30,transformOrigin:'54px 162px',duration:.2,ease:'power2.out'},.45)
+        .to('#kidLegR',{rotate:-30,transformOrigin:'86px 162px',duration:.2,ease:'power2.out'},.45)
+        .to('#kidLegL',{rotate:0,duration:.3,delay:.8})
+        .to('#kidLegR',{rotate:0,duration:.3},'-=.3');
+    }
+
+    // ── Event hooks ──
+    function onFire() {
+      recentCount++;
+      clearTimeout(resetTimer);
+      resetTimer = setTimeout(() => { recentCount = 0; }, 2000);
+
+      if (recentCount >= 3) {
+        doKO();
+      } else {
+        doShock();
+      }
+    }
+
+    document.getElementById('launchBtn').addEventListener('click', onFire);
+    document.getElementById('c').addEventListener('pointerdown', onFire);
   }
-
-  // Observe launch button click
-  launchBtn2.addEventListener('click', onFireworkLaunched);
-  // Observe canvas click (fires a rocket)
-  canvasEl.addEventListener('pointerdown', onFireworkLaunched);
-
 })();
 </script>
 </body>
 </html>
+
