@@ -22,13 +22,64 @@
   --t-1: hsl(var(--shade-hue), calc((0 + (var(--on, 0) * 20)) * 1%), calc((30 + (var(--on, 0) * 60)) * 1%));
   --t-2: hsl(var(--shade-hue), calc((0 + (var(--on, 0) * 20)) * 1%), calc((20 + (var(--on, 0) * 35)) * 1%));
   --t-3: hsl(var(--shade-hue), calc((0 + (var(--on, 0) * 20)) * 1%), calc((10 + (var(--on, 0) * 20)) * 1%));
+
+  /* Glow color (updated by JS) */
+  --glow-color: 50, 90%, 70%;
+  --glow-r: 255;
+  --glow-g: 220;
+  --glow-b: 100;
 }
+
 body {
   min-height: 100vh;
-  display: grid;
-  place-items: center;
-  background: #121921;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #0a0e14;
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow: hidden;
+  transition: background 0.8s ease;
 }
+
+/* ── Ambient room glow (appears behind lamp when ON) ── */
+.room-glow {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 50% 20%,
+    rgba(var(--glow-r), var(--glow-g), var(--glow-b), 0.08) 0%,
+    rgba(var(--glow-r), var(--glow-g), var(--glow-b), 0.03) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+  z-index: 0;
+}
+body.lamp-on .room-glow {
+  opacity: 1;
+}
+
+/* ── Neon glow filter on lamp SVG ── */
+.lamp-glow-wrap {
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 0 0px transparent);
+  transition: filter 0.8s ease;
+}
+body.lamp-on .lamp-glow-wrap {
+  filter:
+    drop-shadow(0 20px 40px rgba(var(--glow-r), var(--glow-g), var(--glow-b), 0.35))
+    drop-shadow(0 5px 15px rgba(var(--glow-r), var(--glow-g), var(--glow-b), 0.25));
+}
+
 label,
 input {
   position: absolute;
@@ -43,11 +94,12 @@ input {
 }
 .lamp {
   display: none;
-  height: 40vmin;
+  height: 42vmin;
   overflow: visible !important;
 }
 .cord {
   stroke: var(--cord);
+  fill: none;
 }
 .cord--rig {
   display: none;
@@ -68,22 +120,111 @@ input {
 .lamp__mouth,
 .lamp__light {
   opacity: var(--on, 0);
+  transition: opacity 0.6s ease;
 }
 .shade__opening {
   fill: var(--opening);
+  transition: fill 0.6s ease;
 }
 .shade__opening-shade {
   opacity: calc(1 - var(--on, 0));
+  transition: opacity 0.6s ease;
 }
 .post__body {
   fill: var(--post);
+  transition: fill 0.6s ease;
 }
 .base__top {
   fill: var(--base-top);
+  transition: fill 0.6s ease;
 }
 .base__side {
   fill: var(--base-side);
+  transition: fill 0.6s ease;
 }
 .top__body {
   fill: var(--t-3);
+  transition: fill 0.6s ease;
+}
+
+/* ── Color Picker Panel ── */
+.color-panel {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  background: rgba(255,255,255, 0.05);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255, 0.08);
+  border-radius: 999px;
+  z-index: 20;
+}
+
+.swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+.swatch:hover {
+  transform: scale(1.2);
+}
+.swatch.active {
+  border-color: white;
+  box-shadow: 0 0 12px rgba(255,255,255,0.4);
+}
+
+.swatch-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(255,255,255, 0.12);
+}
+
+.custom-color {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.15);
+  cursor: pointer;
+  padding: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  background: none;
+  overflow: hidden;
+}
+.custom-color::-webkit-color-swatch-wrapper { padding: 0; }
+.custom-color::-webkit-color-swatch { border: none; border-radius: 50%; }
+
+.panel-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  margin-right: 4px;
+}
+
+/* ── Keyboard hint ── */
+.hint {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.15);
+  letter-spacing: 0.12em;
+  z-index: 20;
+}
+.hint kbd {
+  background: rgba(255,255,255,0.08);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: inherit;
+  border: 1px solid rgba(255,255,255,0.1);
 }

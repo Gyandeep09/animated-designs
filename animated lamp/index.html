@@ -1,18 +1,23 @@
 <!DOCTYPE html>
-<html lang="en" >
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Cute Lamp  (GSAP Draggable + MorphSVG)</title>
-  <link rel="stylesheet" href="https://public.codepenassets.com/css/normalize-5.0.0.min.css">
-<link rel="stylesheet" href="./style.css">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animated Lamp — Interactive</title>
+  <link rel="stylesheet" href="./style.css">
 </head>
 <body>
+
+<!-- Ambient room glow -->
+<div class="room-glow"></div>
+
 <form>
 	<input type="radio" id="on" name="status" value="on">
 	<label for="on">On</label>
 	<input type="radio" id="off" name="status" value="off">
 	<label for="off">Off</label>
+
+  <div class="lamp-glow-wrap">
   <svg class="lamp" viewBox="0 0 333 484" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g class="lamp__shade shade">
       <ellipse class="shade__opening" cx="165" cy="220" rx="130" ry="20"/>
@@ -35,7 +40,7 @@
       <path class="cord cord--rig" d="M124 187s29.763 8.644 29.763 20.735-19.842 13.823-29.763 20.734c-9.921 6.912-29.763 8.644-29.763 20.735S124 269.939 124 269.939" stroke-width="6" stroke-linecap="round" />
       <path class="cord cord--rig" d="M124 187.029s-10.63 26.199-10.63 39.992c0 13.794 7.087 26.661 10.63 39.992 3.543 13.331 10.63 26.198 10.63 39.992 0 13.793-10.63 39.992-10.63 39.992" stroke-width="6" stroke-linecap="round" />
       <path class="cord cord--rig" d="M124 187.033V347" stroke-width="6" stroke-linecap="round" />
-      <line class="cord cord--dummy" x1="124" y2="348" x2="124" y1="190" stroke-width="6"  stroke-linecap="round"/>
+      <line class="cord cord--dummy" x1="124" y2="348" x2="124" y1="190" stroke-width="6" stroke-linecap="round"/>
     </g>
     <path class="lamp__light" d="M290.5 193H39L0 463.5c0 11.046 75.478 20 165.5 20s167-11.954 167-23l-42-267.5z" fill="url(#light)"/>
     <g class="lamp__top top">
@@ -85,11 +90,30 @@
     </defs>
     <circle class="lamp__hit" cx="124" cy="347" r="66" fill="#C4C4C4" fill-opacity=".1"/>
   </svg>
+  </div>
 </form>
-<!-- partial -->
-  <script src='https://unpkg.co/gsap@3/dist/gsap.min.js'></script>
+
+<!-- Color picker panel -->
+<div class="color-panel">
+  <span class="panel-label">Glow</span>
+  <button type="button" class="swatch active" data-color="320" data-rgb="255,180,220" style="background:#ffb4dc" title="Pink"></button>
+  <button type="button" class="swatch" data-color="45" data-rgb="255,220,100" style="background:#ffdc64" title="Warm Yellow"></button>
+  <button type="button" class="swatch" data-color="200" data-rgb="100,200,255" style="background:#64c8ff" title="Sky Blue"></button>
+  <button type="button" class="swatch" data-color="280" data-rgb="180,130,255" style="background:#b482ff" title="Purple"></button>
+  <button type="button" class="swatch" data-color="140" data-rgb="100,255,160" style="background:#64ffa0" title="Mint"></button>
+  <button type="button" class="swatch" data-color="0" data-rgb="255,120,100" style="background:#ff7864" title="Coral"></button>
+  <button type="button" class="swatch" data-color="30" data-rgb="255,180,80" style="background:#ffb450" title="Orange"></button>
+  <button type="button" class="swatch" data-color="170" data-rgb="100,240,220" style="background:#64f0dc" title="Teal"></button>
+  <div class="swatch-divider"></div>
+  <input type="color" class="custom-color" id="customColor" value="#ffb4dc" title="Custom color">
+</div>
+
+<div class="hint">Pull the cord or press <kbd>Space</kbd> to toggle</div>
+
+<script src='https://unpkg.co/gsap@3/dist/gsap.min.js'></script>
 <script src='https://unpkg.com/gsap@3/dist/Draggable.min.js'></script>
-<script src='https://assets.codepen.io/16327/MorphSVGPlugin3.min.js'></script><script  src="./script.js"></script>
+<script src='https://assets.codepen.io/16327/MorphSVGPlugin3.min.js'></script>
+<script src="./script.js"></script>
 
 </body>
 </html>
