@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════
-   LAMP CONTROLLER — STRICT PHYSICAL RULES ENGINE
+   LAMP CONTROLLER v4 — STRICT RULES, CLEAN
    ═══════════════════════════════════════════════ */
 
 const { gsap, gsap: { registerPlugin, set, to, timeline }, MorphSVGPlugin, Draggable } = window;
@@ -10,17 +10,16 @@ const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 const root = document.documentElement;
 
-// ── SINGLE STATE OBJECT ──
+// ═══ SINGLE STATE OBJECT ═══
 const STATE = {
   isPowered: false,
-  currentMode: 'static',  // static|flow|breathe|beat|strobe|wave|candle|glitch
-  colorSequence: ['#ff69b4', '#818cf8'],
-  activeColor: { r: 255, g: 180, b: 220, hue: 320 },
-  fxSettings: { brightness: 100, contrast: 100, spread: 40, intensity: 35 }
+  currentMode: 'static',
+  colorSequence: ['#ffc88c', '#818cf8'],
+  activeColor: { r: 255, g: 200, b: 140, hue: 30 },
+  brightness: 100
 };
 
-// ── DOM REFS ──
-const ON_RADIO = $('#on'), OFF_RADIO = $('#off');
+// ═══ CORD SETUP ═══
 const HIT = $('.lamp__hit');
 const DUMMY_CORD = $('.cord--dummy');
 const CORDS = gsap.utils.toArray('.cords path');
@@ -28,18 +27,35 @@ const ENDX = DUMMY_CORD.getAttribute('x2');
 const ENDY = DUMMY_CORD.getAttribute('y2');
 const PROXY = document.createElement('div');
 let startX, startY;
-const CORD_DURATION = 0.1;
+const CORD_DUR = 0.1;
 const RESET = () => set(PROXY, { x: ENDX, y: ENDY });
 RESET();
 
 gsap.set(['.cords', HIT], { x: -10 });
 gsap.set('.lamp__eye', { rotate: 180, transformOrigin: '50% 50%', yPercent: 50 });
 
-// ═══════════════════════════════════════════════
-// CORE FUNCTIONS
-// ═══════════════════════════════════════════════
+// ═══ HELPERS ═══
+function hexToRGB(hex) {
+  hex = hex.replace('#', '');
+  return { r: parseInt(hex.slice(0,2),16), g: parseInt(hex.slice(2,4),16), b: parseInt(hex.slice(4,6),16) };
+}
+function rgbToHue(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r,g,b), mn = Math.min(r,g,b);
+  if (mx === mn) return 0;
+  const d = mx - mn;
+  let h;
+  if (mx === r) h = ((g-b)/d + (g<b?6:0)) * 60;
+  else if (mx === g) h = ((b-r)/d + 2) * 60;
+  else h = ((r-g)/d + 4) * 60;
+  return Math.round(h);
+}
+function lerpC(a, b, t) {
+  return { r: Math.round(a.r+(b.r-a.r)*t), g: Math.round(a.g+(b.g-a.g)*t), b: Math.round(a.b+(b.b-a.b)*t) };
+}
 
-function applyColorToCSS(r, g, b, hue) {
+// ═══ APPLY TO CSS (no side effects) ═══
+function applyColor(r, g, b, hue) {
   root.style.setProperty('--glow-r', r);
   root.style.setProperty('--glow-g', g);
   root.style.setProperty('--glow-b', b);
@@ -47,120 +63,206 @@ function applyColorToCSS(r, g, b, hue) {
   $('#colorPreview').style.background = `rgb(${r},${g},${b})`;
 }
 
-function applyFXToCSS() {
-  const fx = STATE.fxSettings;
-  root.style.setProperty('--brightness', (fx.brightness / 100).toFixed(2));
-  root.style.setProperty('--contrast', (fx.contrast / 100).toFixed(2));
-  root.style.setProperty('--glow-spread', fx.spread);
-  root.style.setProperty('--glow-intensity', (fx.intensity / 100).toFixed(2));
-  $('#brightVal').textContent = fx.brightness + '%';
-  $('#contrastVal').textContent = fx.contrast + '%';
-  $('#spreadVal').textContent = fx.spread;
-  $('#intensityVal').textContent = fx.intensity + '%';
+function applyBrightness() {
+  root.style.setProperty('--brightness', (STATE.brightness / 100).toFixed(2));
+  $('#brightVal').textContent = STATE.brightness + '%';
 }
 
-function syncRGBSliders(r, g, b) {
-  $('#sliderR').value = r; $('#rVal').textContent = r;
-  $('#sliderG').value = g; $('#gVal').textContent = g;
-  $('#sliderB').value = b; $('#bVal').textContent = b;
-}
-
-function hexToRGB(hex) {
-  hex = hex.replace('#', '');
-  return { r: parseInt(hex.slice(0,2),16), g: parseInt(hex.slice(2,4),16), b: parseInt(hex.slice(4,6),16) };
-}
-
-function rgbToHue(r, g, b) {
-  r /= 255; g /= 255; b /= 255;
-  const max = Math.max(r,g,b), min = Math.min(r,g,b);
-  let h = 0;
-  if (max !== min) {
-    const d = max - min;
-    if (max === r) h = ((g-b)/d + (g<b?6:0)) * 60;
-    else if (max === g) h = ((b-r)/d + 2) * 60;
-    else h = ((r-g)/d + 4) * 60;
-  }
-  return Math.round(h);
-}
-
-// ── UI STATE MANAGEMENT ──
-function updateUIState() {
-  const colorSec = $('#colorSection');
-  const fxSec = $('#fxSection');
-  const lockBadge = $('#lockBadge');
-  const statusText = $('#statusText');
+// ═══ UI STATE (lock/unlock panels) ═══
+function updateUI() {
+  const cs = $('#colorSection');
+  const fx = $('#fxSection');
+  const badge = $('#lockBadge');
 
   if (STATE.isPowered) {
-    // ON: Lock color section, unlock FX
-    colorSec.className = 'panel-section section-locked';
-    fxSec.className = 'panel-section fx-on';
-    lockBadge.className = 'lock-badge locked';
-    lockBadge.textContent = '🔒 LOCKED';
-    statusText.textContent = 'ON';
+    cs.className = 'panel-section section-locked';
+    fx.className = 'panel-section fx-on';
+    badge.className = 'lock-badge locked';
+    badge.textContent = '🔒 LOCKED';
+    $('#statusText').textContent = 'ON';
     document.body.classList.add('lamp-on');
   } else {
-    // OFF: Unlock color section, lock FX
-    colorSec.className = 'panel-section section-unlocked';
-    fxSec.className = 'panel-section fx-off';
-    lockBadge.className = 'lock-badge unlocked';
-    lockBadge.textContent = '🔓 EDIT';
-    statusText.textContent = 'OFF';
+    cs.className = 'panel-section section-unlocked';
+    fx.className = 'panel-section fx-off';
+    badge.className = 'lock-badge unlocked';
+    badge.textContent = '🔓 EDIT';
+    $('#statusText').textContent = 'OFF';
     document.body.classList.remove('lamp-on');
   }
 }
 
-// ═══════════════════════════════════════════════
-// POWER TOGGLE — THE ONE-WAY SWITCH (cord only)
-// ═══════════════════════════════════════════════
-let effectTimeline = null;
+// ═══ EFFECT ENGINE ═══
+let effectTL = null;
+let candleRAF = null;
+let glitchIV = null;
 
+function stopEffect() {
+  if (effectTL) { effectTL.kill(); effectTL = null; }
+  if (candleRAF) { cancelAnimationFrame(candleRAF); candleRAF = null; }
+  if (glitchIV) { clearInterval(glitchIV); glitchIV = null; }
+  // Reset any scale/position tweaks from effects
+  gsap.set('.lamp-glow-wrap', { x: 0, scale: 1 });
+  applyBrightness();
+}
+
+function getColors() { return STATE.colorSequence.map(hexToRGB); }
+
+function startEffect() {
+  stopEffect();
+  const colors = getColors();
+  if (!colors.length) return;
+  const c = STATE.activeColor;
+  applyColor(c.r, c.g, c.b, c.hue);
+  const mode = STATE.currentMode;
+
+  if (mode === 'static') return; // Just the color, nothing animated
+
+  if (mode === 'flow') {
+    const tl = gsap.timeline({ repeat: -1 });
+    for (let i = 0; i < colors.length; i++) {
+      const next = colors[(i+1) % colors.length];
+      const p = { r: colors[i].r, g: colors[i].g, b: colors[i].b };
+      tl.to(p, { r: next.r, g: next.g, b: next.b, duration: 2.5, ease: 'none',
+        onUpdate: () => applyColor(~~p.r, ~~p.g, ~~p.b, rgbToHue(p.r, p.g, p.b))
+      });
+    }
+    effectTL = tl;
+    return;
+  }
+
+  if (mode === 'breathe') {
+    const tl = gsap.timeline({ repeat: -1 });
+    colors.forEach(col => {
+      tl.call(() => applyColor(col.r, col.g, col.b, rgbToHue(col.r, col.g, col.b)))
+        .fromTo(root, { '--brightness': '0.3' }, { '--brightness': (STATE.brightness/100).toFixed(2), duration: 1.4, ease: 'sine.inOut' })
+        .to(root, { '--brightness': '0.3', duration: 1.4, ease: 'sine.inOut' })
+        .to({}, { duration: 0.2 });
+    });
+    effectTL = tl;
+    return;
+  }
+
+  if (mode === 'beat') {
+    const tl = gsap.timeline({ repeat: -1 });
+    for (let i = 0; i < colors.length * 3; i++) {
+      const col = colors[i % colors.length];
+      tl.call(() => applyColor(col.r, col.g, col.b, rgbToHue(col.r, col.g, col.b)))
+        .to('.lamp-glow-wrap', { scale: 1.04, duration: 0.06, ease: 'power4.out', transformOrigin: '50% 80%' })
+        .to('.lamp-glow-wrap', { scale: 1, duration: 0.3, ease: 'elastic.out(1,.4)' })
+        .to({}, { duration: 0.4 });
+    }
+    effectTL = tl;
+    return;
+  }
+
+  if (mode === 'strobe') {
+    const tl = gsap.timeline({ repeat: -1 });
+    for (let i = 0; i < colors.length * 4; i++) {
+      const col = colors[i % colors.length];
+      tl.call(() => { applyColor(col.r, col.g, col.b, rgbToHue(col.r, col.g, col.b)); root.style.setProperty('--on', '1'); })
+        .to({}, { duration: 0.1 })
+        .call(() => root.style.setProperty('--on', '0.1'))
+        .to({}, { duration: 0.1 });
+    }
+    effectTL = tl;
+    return;
+  }
+
+  if (mode === 'wave') {
+    const p = { t: 0 };
+    const update = () => {
+      const idx = Math.floor(p.t * (colors.length - 1));
+      const frac = (p.t * (colors.length - 1)) - idx;
+      const a = colors[Math.min(idx, colors.length - 1)];
+      const b = colors[Math.min(idx + 1, colors.length - 1)];
+      const mixed = lerpC(a, b, frac);
+      applyColor(mixed.r, mixed.g, mixed.b, rgbToHue(mixed.r, mixed.g, mixed.b));
+    };
+    effectTL = gsap.timeline({ repeat: -1, yoyo: true })
+      .to(p, { t: 1, duration: 4, ease: 'sine.inOut', onUpdate: update });
+    return;
+  }
+
+  if (mode === 'candle') {
+    const base = colors[0];
+    applyColor(base.r, base.g, base.b, rgbToHue(base.r, base.g, base.b));
+    function flick() {
+      const r = Math.max(0, Math.min(255, base.r + ~~((Math.random()-.5)*25)));
+      const g = Math.max(0, Math.min(255, base.g + ~~((Math.random()-.5)*18)));
+      const b = Math.max(0, Math.min(255, base.b + ~~((Math.random()-.5)*10)));
+      const br = (STATE.brightness + (Math.random()-.5)*25) / 100;
+      root.style.setProperty('--glow-r', r);
+      root.style.setProperty('--glow-g', g);
+      root.style.setProperty('--glow-b', b);
+      root.style.setProperty('--brightness', Math.max(0.3, Math.min(2, br)).toFixed(2));
+      candleRAF = requestAnimationFrame(() => setTimeout(flick, 50 + Math.random() * 100));
+    }
+    flick();
+    return;
+  }
+
+  if (mode === 'glitch') {
+    const base = colors[0];
+    applyColor(base.r, base.g, base.b, rgbToHue(base.r, base.g, base.b));
+    glitchIV = setInterval(() => {
+      if (Math.random() < 0.3) {
+        const gc = colors[~~(Math.random() * colors.length)];
+        applyColor(gc.r, gc.g, gc.b, rgbToHue(gc.r, gc.g, gc.b));
+        root.style.setProperty('--brightness', (0.4 + Math.random() * 1.4).toFixed(2));
+        gsap.to('.lamp-glow-wrap', { x: (Math.random()-.5)*5, duration: 0.04 });
+        setTimeout(() => {
+          applyColor(base.r, base.g, base.b, rgbToHue(base.r, base.g, base.b));
+          applyBrightness();
+          gsap.to('.lamp-glow-wrap', { x: 0, duration: 0.08 });
+        }, 30 + Math.random() * 60);
+      }
+    }, 140);
+    return;
+  }
+}
+
+// ═══ POWER TOGGLE (CORD ONLY) ═══
 function powerToggle() {
   STATE.isPowered = !STATE.isPowered;
-
   set(root, { '--on': STATE.isPowered ? 1 : 0 });
   set(root, { '--shade-hue': STATE.activeColor.hue });
   set('.lamp__eye', { rotate: STATE.isPowered ? 0 : 180 });
 
-  applyColorToCSS(STATE.activeColor.r, STATE.activeColor.g, STATE.activeColor.b, STATE.activeColor.hue);
-
   if (STATE.isPowered) {
-    ON_RADIO.setAttribute('checked', true);
-    OFF_RADIO.removeAttribute('checked');
-    startEffect();
+    $('#on').setAttribute('checked', true);
+    $('#off').removeAttribute('checked');
+    applyColor(STATE.activeColor.r, STATE.activeColor.g, STATE.activeColor.b, STATE.activeColor.hue);
+    applyBrightness();
+    startEffect(); // Effect ONLY starts here
   } else {
-    ON_RADIO.removeAttribute('checked');
-    OFF_RADIO.setAttribute('checked', true);
-    stopEffect();
+    $('#on').removeAttribute('checked');
+    $('#off').setAttribute('checked', true);
+    stopEffect(); // Effect ONLY stops here
   }
 
   set([DUMMY_CORD, HIT], { display: 'none' });
   set(CORDS[0], { display: 'block' });
   AUDIO.CLICK.play();
-  updateUIState();
+  updateUI();
 }
 
-// ── CORD TIMELINE ──
+// ═══ CORD PHYSICS ═══
 const CORD_TL = timeline({
   paused: true,
   onStart: () => powerToggle(),
-  onComplete: () => {
-    set([DUMMY_CORD, HIT], { display: 'block' });
-    set(CORDS[0], { display: 'none' });
-    RESET();
-  }
+  onComplete: () => { set([DUMMY_CORD, HIT], { display: 'block' }); set(CORDS[0], { display: 'none' }); RESET(); }
 });
 for (let i = 1; i < CORDS.length; i++) {
-  CORD_TL.add(to(CORDS[0], { morphSVG: CORDS[i], duration: CORD_DURATION, repeat: 1, yoyo: true }));
+  CORD_TL.add(to(CORDS[0], { morphSVG: CORDS[i], duration: CORD_DUR, repeat: 1, yoyo: true }));
 }
 
-// ── DRAGGABLE ──
 Draggable.create(PROXY, {
   trigger: HIT, type: 'x,y',
   onPress: e => { startX = e.x; startY = e.y; },
   onDrag: function() { set(DUMMY_CORD, { attr: { x2: this.x, y2: Math.max(400, this.y) } }); },
   onRelease: function(e) {
     const d = Math.sqrt((e.x-startX)**2 + (e.y-startY)**2);
-    to(DUMMY_CORD, { attr: { x2: ENDX, y2: ENDY }, duration: CORD_DURATION,
+    to(DUMMY_CORD, { attr: { x2: ENDX, y2: ENDY }, duration: CORD_DUR,
       onComplete: () => { if (d > 50) CORD_TL.restart(); else RESET(); }
     });
   }
@@ -173,230 +275,21 @@ document.addEventListener('keydown', e => {
   if (e.code === 'Space' && !e.repeat) { e.preventDefault(); CORD_TL.restart(); }
 });
 
-// ═══════════════════════════════════════════════
-// EFFECT ENGINE — 7 ANIMATION PATTERNS + STATIC
-// ═══════════════════════════════════════════════
+// ═══ COLOR SECTION EVENTS (OFF only, NO effects triggered) ═══
 
-function stopEffect() {
-  if (effectTimeline) { effectTimeline.kill(); effectTimeline = null; }
-  if (window._candleRAF) { cancelAnimationFrame(window._candleRAF); window._candleRAF = null; }
-  if (window._glitchInterval) { clearInterval(window._glitchInterval); window._glitchInterval = null; }
-}
-
-function getStopColors() {
-  return STATE.colorSequence.map(hex => hexToRGB(hex));
-}
-
-function lerpColor(a, b, t) {
-  return { r: Math.round(a.r + (b.r - a.r) * t), g: Math.round(a.g + (b.g - a.g) * t), b: Math.round(a.b + (b.b - a.b) * t) };
-}
-
-function startEffect() {
-  stopEffect();
-  const colors = getStopColors();
-  if (colors.length === 0) return;
-
-  const mode = STATE.currentMode;
-
-  // Static: just apply the first color
-  if (mode === 'static') {
-    const c = colors[0];
-    applyColorToCSS(c.r, c.g, c.b, rgbToHue(c.r, c.g, c.b));
-    return;
-  }
-
-  // ── FLOW: smooth linear transition through color list ──
-  if (mode === 'flow') {
-    const dur = 2; // seconds per color
-    const tl = gsap.timeline({ repeat: -1 });
-    for (let i = 0; i < colors.length; i++) {
-      const next = colors[(i + 1) % colors.length];
-      const proxy = { r: colors[i].r, g: colors[i].g, b: colors[i].b };
-      tl.to(proxy, {
-        r: next.r, g: next.g, b: next.b, duration: dur, ease: 'none',
-        onUpdate: () => applyColorToCSS(Math.round(proxy.r), Math.round(proxy.g), Math.round(proxy.b), rgbToHue(proxy.r, proxy.g, proxy.b))
-      });
-    }
-    effectTimeline = tl;
-    return;
-  }
-
-  // ── BREATHE: fade in/out with pulse ──
-  if (mode === 'breathe') {
-    let idx = 0;
-    const tl = gsap.timeline({ repeat: -1 });
-    const breatheOne = () => {
-      const c = colors[idx % colors.length];
-      idx++;
-      return [
-        // fade in
-        gsap.to({}, { duration: 1.2, ease: 'sine.inOut',
-          onUpdate: function() {
-            const p = this.progress();
-            const br = 50 + p * (STATE.fxSettings.brightness - 50);
-            root.style.setProperty('--brightness', (br / 100).toFixed(2));
-            applyColorToCSS(c.r, c.g, c.b, rgbToHue(c.r, c.g, c.b));
-          }
-        }),
-        // hold
-        gsap.to({}, { duration: 0.3 }),
-        // fade out
-        gsap.to({}, { duration: 1.2, ease: 'sine.inOut',
-          onUpdate: function() {
-            const p = 1 - this.progress();
-            const br = 50 + p * (STATE.fxSettings.brightness - 50);
-            root.style.setProperty('--brightness', (br / 100).toFixed(2));
-          }
-        }),
-        gsap.to({}, { duration: 0.3 })
-      ];
-    };
-    for (let i = 0; i < colors.length * 2; i++) {
-      breatheOne().forEach(tw => tl.add(tw));
-    }
-    effectTimeline = tl;
-    return;
-  }
-
-  // ── BEAT: sharp rhythmic jump ──
-  if (mode === 'beat') {
-    let idx = 0;
-    const tl = gsap.timeline({ repeat: -1 });
-    for (let i = 0; i < colors.length * 4; i++) {
-      const c = colors[i % colors.length];
-      tl.call(() => applyColorToCSS(c.r, c.g, c.b, rgbToHue(c.r, c.g, c.b)))
-        .to('.lamp-glow-wrap', { scale: 1.04, duration: 0.08, ease: 'power4.out', transformOrigin: '50% 80%' })
-        .to('.lamp-glow-wrap', { scale: 1, duration: 0.25, ease: 'elastic.out(1, 0.4)' })
-        .to({}, { duration: 0.35 });
-    }
-    effectTimeline = tl;
-    return;
-  }
-
-  // ── STROBE: safe high-freq flash ──
-  if (mode === 'strobe') {
-    let idx = 0;
-    const tl = gsap.timeline({ repeat: -1 });
-    for (let i = 0; i < colors.length * 6; i++) {
-      const c = colors[i % colors.length];
-      tl.call(() => { applyColorToCSS(c.r, c.g, c.b, rgbToHue(c.r, c.g, c.b)); root.style.setProperty('--on', '1'); })
-        .to({}, { duration: 0.08 })
-        .call(() => root.style.setProperty('--on', '0.15'))
-        .to({}, { duration: 0.08 });
-    }
-    effectTimeline = tl;
-    return;
-  }
-
-  // ── WAVE: top-to-bottom gradient shift ──
-  if (mode === 'wave') {
-    const proxy = { t: 0 };
-    const tl = gsap.timeline({ repeat: -1 });
-    tl.to(proxy, {
-      t: 1, duration: 3, ease: 'sine.inOut',
-      onUpdate: () => {
-        const i = Math.floor(proxy.t * (colors.length - 1));
-        const frac = (proxy.t * (colors.length - 1)) - i;
-        const a = colors[Math.min(i, colors.length - 1)];
-        const b = colors[Math.min(i + 1, colors.length - 1)];
-        const c = lerpColor(a, b, frac);
-        applyColorToCSS(c.r, c.g, c.b, rgbToHue(c.r, c.g, c.b));
-        // Shift glow spread to create wave
-        root.style.setProperty('--glow-spread', Math.round(20 + Math.sin(proxy.t * Math.PI * 2) * 30));
-      }
-    }).to(proxy, { t: 0, duration: 3, ease: 'sine.inOut',
-      onUpdate: () => {
-        const i = Math.floor(proxy.t * (colors.length - 1));
-        const frac = (proxy.t * (colors.length - 1)) - i;
-        const a = colors[Math.min(i, colors.length - 1)];
-        const b = colors[Math.min(i + 1, colors.length - 1)];
-        const c = lerpColor(a, b, frac);
-        applyColorToCSS(c.r, c.g, c.b, rgbToHue(c.r, c.g, c.b));
-        root.style.setProperty('--glow-spread', Math.round(20 + Math.sin(proxy.t * Math.PI * 2) * 30));
-      }
-    });
-    effectTimeline = tl;
-    return;
-  }
-
-  // ── CANDLE FLICKER: random micro-adjustments ──
-  if (mode === 'candle') {
-    const baseC = colors[0];
-    applyColorToCSS(baseC.r, baseC.g, baseC.b, rgbToHue(baseC.r, baseC.g, baseC.b));
-    function flicker() {
-      const dr = Math.round((Math.random() - 0.5) * 30);
-      const dg = Math.round((Math.random() - 0.5) * 20);
-      const db = Math.round((Math.random() - 0.5) * 10);
-      const br = STATE.fxSettings.brightness + (Math.random() - 0.5) * 30;
-      const r = Math.max(0, Math.min(255, baseC.r + dr));
-      const g = Math.max(0, Math.min(255, baseC.g + dg));
-      const b = Math.max(0, Math.min(255, baseC.b + db));
-      root.style.setProperty('--glow-r', r);
-      root.style.setProperty('--glow-g', g);
-      root.style.setProperty('--glow-b', b);
-      root.style.setProperty('--brightness', (Math.max(50, Math.min(200, br)) / 100).toFixed(2));
-      root.style.setProperty('--glow-intensity', ((STATE.fxSettings.intensity + (Math.random() - 0.5) * 20) / 100).toFixed(2));
-      window._candleRAF = requestAnimationFrame(() => {
-        setTimeout(flicker, 50 + Math.random() * 120);
-      });
-    }
-    flicker();
-    return;
-  }
-
-  // ── GLITCH: digital flicker ──
-  if (mode === 'glitch') {
-    const baseC = colors[0];
-    applyColorToCSS(baseC.r, baseC.g, baseC.b, rgbToHue(baseC.r, baseC.g, baseC.b));
-    window._glitchInterval = setInterval(() => {
-      if (Math.random() < 0.3) {
-        // Glitch burst
-        const gc = colors[Math.floor(Math.random() * colors.length)];
-        applyColorToCSS(gc.r, gc.g, gc.b, rgbToHue(gc.r, gc.g, gc.b));
-        root.style.setProperty('--brightness', (0.5 + Math.random() * 1.5).toFixed(2));
-        gsap.to('.lamp-glow-wrap', { x: (Math.random()-0.5)*6, duration: 0.05 });
-        setTimeout(() => {
-          applyColorToCSS(baseC.r, baseC.g, baseC.b, rgbToHue(baseC.r, baseC.g, baseC.b));
-          root.style.setProperty('--brightness', (STATE.fxSettings.brightness / 100).toFixed(2));
-          gsap.to('.lamp-glow-wrap', { x: 0, duration: 0.1 });
-        }, 40 + Math.random() * 80);
-      }
-    }, 150);
-    return;
-  }
-}
-
-// ═══════════════════════════════════════════════
-// COLOR SECTION EVENTS (only work when OFF)
-// ═══════════════════════════════════════════════
-
-// Quick swatches
+// Swatches — just set color, nothing else
 $$('.swatch').forEach(btn => {
   btn.addEventListener('click', () => {
-    if (STATE.isPowered) return; // LOCKED
+    if (STATE.isPowered) return;
     $$('.swatch').forEach(s => s.classList.remove('active'));
     btn.classList.add('active');
-    const r = +btn.dataset.r, g = +btn.dataset.g, b = +btn.dataset.b, hue = +btn.dataset.hue;
-    STATE.activeColor = { r, g, b, hue };
-    applyColorToCSS(r, g, b, hue);
-    syncRGBSliders(r, g, b);
+    const r = +btn.dataset.r, g = +btn.dataset.g, b = +btn.dataset.b;
+    STATE.activeColor = { r, g, b, hue: +btn.dataset.hue };
+    applyColor(r, g, b, STATE.activeColor.hue);
   });
 });
 
-// RGB sliders
-['sliderR','sliderG','sliderB'].forEach(id => {
-  $(('#' + id)).addEventListener('input', () => {
-    if (STATE.isPowered) return;
-    const r = +$('#sliderR').value, g = +$('#sliderG').value, b = +$('#sliderB').value;
-    $('#rVal').textContent = r; $('#gVal').textContent = g; $('#bVal').textContent = b;
-    const hue = rgbToHue(r, g, b);
-    STATE.activeColor = { r, g, b, hue };
-    applyColorToCSS(r, g, b, hue);
-    $$('.swatch').forEach(s => s.classList.remove('active'));
-  });
-});
-
-// Mode pills
+// Mode pills — just set mode, nothing else
 $$('.mode-pill').forEach(btn => {
   btn.addEventListener('click', () => {
     if (STATE.isPowered) return;
@@ -406,107 +299,79 @@ $$('.mode-pill').forEach(btn => {
   });
 });
 
-// ── MULTI-COLOR STOPS ──
-function rebuildStopsFromDOM() {
+// Color stops
+function rebuildStops() {
   STATE.colorSequence = [];
   $$('#stopsRow .color-stop').forEach(inp => STATE.colorSequence.push(inp.value));
-  // Use first stop as active color for static mode
   if (STATE.colorSequence.length > 0) {
     const c = hexToRGB(STATE.colorSequence[0]);
     STATE.activeColor = { ...c, hue: rgbToHue(c.r, c.g, c.b) };
-    applyColorToCSS(c.r, c.g, c.b, STATE.activeColor.hue);
-    syncRGBSliders(c.r, c.g, c.b);
+    applyColor(c.r, c.g, c.b, STATE.activeColor.hue);
   }
 }
-
-function addStopEvents() {
+function bindStops() {
   $$('#stopsRow .color-stop').forEach(inp => {
-    inp.removeEventListener('input', onStopChange);
-    inp.addEventListener('input', onStopChange);
+    inp.onchange = () => { if (!STATE.isPowered) rebuildStops(); };
   });
   $$('#stopsRow .remove-stop').forEach(btn => {
-    btn.removeEventListener('click', onRemoveStop);
-    btn.addEventListener('click', onRemoveStop);
+    btn.onclick = () => {
+      if (STATE.isPowered || $$('#stopsRow .stop-wrap').length <= 2) return;
+      btn.closest('.stop-wrap').remove();
+      rebuildStops();
+    };
   });
 }
-
-function onStopChange() {
-  if (STATE.isPowered) return;
-  rebuildStopsFromDOM();
-}
-
-function onRemoveStop(e) {
-  if (STATE.isPowered) return;
-  const stops = $$('#stopsRow .stop-wrap');
-  if (stops.length <= 2) return; // minimum 2
-  e.target.closest('.stop-wrap').remove();
-  rebuildStopsFromDOM();
-}
+bindStops();
 
 $('#addStopBtn').addEventListener('click', () => {
-  if (STATE.isPowered) return;
-  const stops = $$('#stopsRow .stop-wrap');
-  if (stops.length >= 6) return; // max 6
+  if (STATE.isPowered || $$('#stopsRow .stop-wrap').length >= 6) return;
   const wrap = document.createElement('div');
   wrap.className = 'stop-wrap';
-  const randHex = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6,'0');
-  wrap.innerHTML = `<input type="color" class="color-stop" value="${randHex}"><button class="remove-stop" title="Remove">×</button>`;
+  const hex = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6,'0');
+  wrap.innerHTML = `<input type="color" class="color-stop" value="${hex}"><button class="remove-stop" title="Remove">×</button>`;
   $('#stopsRow').insertBefore(wrap, $('#addStopBtn'));
-  addStopEvents();
-  rebuildStopsFromDOM();
+  bindStops();
+  rebuildStops();
 });
 
-addStopEvents();
-
-// ── PRESETS ──
+// Presets — just set colors + mode, no effects
 const PRESETS = {
   cyberpunk: { colors: ['#ff00ff','#00ffff','#ff0066','#6600ff'], mode: 'flow' },
-  sunset:    { colors: ['#ff6b35','#f7c548','#d62828','#ff9e00'], mode: 'breathe' },
-  forest:    { colors: ['#2d6a4f','#40916c','#95d5b2','#52b788'], mode: 'wave' },
-  ocean:     { colors: ['#0077b6','#00b4d8','#90e0ef','#023e8a'], mode: 'flow' },
+  sunset: { colors: ['#ff6b35','#f7c548','#d62828','#ff9e00'], mode: 'breathe' },
+  forest: { colors: ['#2d6a4f','#40916c','#95d5b2','#52b788'], mode: 'wave' },
+  ocean: { colors: ['#0077b6','#00b4d8','#90e0ef','#023e8a'], mode: 'flow' },
   lavadream: { colors: ['#ff006e','#8338ec','#fb5607','#ffbe0b'], mode: 'beat' }
 };
 
 $$('.preset-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     if (STATE.isPowered) return;
-    const preset = PRESETS[btn.dataset.preset];
-    if (!preset) return;
-
-    // Set mode
-    STATE.currentMode = preset.mode;
-    $$('.mode-pill').forEach(p => p.classList.remove('active'));
-    $$(`.mode-pill[data-mode="${preset.mode}"]`).forEach(p => p.classList.add('active'));
-
-    // Set color stops
-    const stopsRow = $('#stopsRow');
-    stopsRow.querySelectorAll('.stop-wrap').forEach(w => w.remove());
-    preset.colors.forEach(hex => {
+    const p = PRESETS[btn.dataset.preset];
+    if (!p) return;
+    STATE.currentMode = p.mode;
+    $$('.mode-pill').forEach(m => m.classList.remove('active'));
+    $(`.mode-pill[data-mode="${p.mode}"]`).classList.add('active');
+    // Rebuild stops
+    $$('#stopsRow .stop-wrap').forEach(w => w.remove());
+    p.colors.forEach(hex => {
       const wrap = document.createElement('div');
       wrap.className = 'stop-wrap';
       wrap.innerHTML = `<input type="color" class="color-stop" value="${hex}"><button class="remove-stop" title="Remove">×</button>`;
-      stopsRow.insertBefore(wrap, $('#addStopBtn'));
+      $('#stopsRow').insertBefore(wrap, $('#addStopBtn'));
     });
-    addStopEvents();
-    rebuildStopsFromDOM();
+    bindStops();
+    rebuildStops();
   });
 });
 
-// ═══════════════════════════════════════════════
-// FX SLIDERS (real-time, only when ON)
-// ═══════════════════════════════════════════════
-['sliderBright','sliderContrast','sliderSpread','sliderIntensity'].forEach(id => {
-  $('#' + id).addEventListener('input', () => {
-    if (!STATE.isPowered) return; // Only active when ON
-    STATE.fxSettings.brightness = +$('#sliderBright').value;
-    STATE.fxSettings.contrast = +$('#sliderContrast').value;
-    STATE.fxSettings.spread = +$('#sliderSpread').value;
-    STATE.fxSettings.intensity = +$('#sliderIntensity').value;
-    applyFXToCSS(); // Instant, no flicker
-  });
+// ═══ BRIGHTNESS (ON only, real-time) ═══
+$('#sliderBright').addEventListener('input', () => {
+  if (!STATE.isPowered) return;
+  STATE.brightness = +$('#sliderBright').value;
+  applyBrightness();
 });
 
-// ── INIT ──
-applyColorToCSS(STATE.activeColor.r, STATE.activeColor.g, STATE.activeColor.b, STATE.activeColor.hue);
-applyFXToCSS();
-updateUIState();
+// ═══ INIT ═══
+applyColor(STATE.activeColor.r, STATE.activeColor.g, STATE.activeColor.b, STATE.activeColor.hue);
+applyBrightness();
+updateUI();
