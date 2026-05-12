@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Animated Lamp — Interactive</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
@@ -16,23 +15,11 @@
   <label for="on">On</label>
   <input type="radio" id="off" name="status" value="off">
   <label for="off">Off</label>
-
   <div class="lamp-glow-wrap">
   <svg class="lamp" viewBox="0 0 333 484" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <g class="lamp__shade shade">
-      <ellipse class="shade__opening" cx="165" cy="220" rx="130" ry="20"/>
-      <ellipse class="shade__opening-shade" cx="165" cy="220" rx="130" ry="20" fill="url(#opening-shade)"/>
-    </g>
-    <g class="lamp__base base">
-      <path class="base__side" d="M165 464c44.183 0 80-8.954 80-20v-14h-22.869c-14.519-3.703-34.752-6-57.131-6-22.379 0-42.612 2.297-57.131 6H85v14c0 11.046 35.817 20 80 20z"/>
-      <path d="M165 464c44.183 0 80-8.954 80-20v-14h-22.869c-14.519-3.703-34.752-6-57.131-6-22.379 0-42.612 2.297-57.131 6H85v14c0 11.046 35.817 20 80 20z" fill="url(#side-shading)"/>
-      <ellipse class="base__top" cx="165" cy="430" rx="80" ry="20"/>
-      <ellipse cx="165" cy="430" rx="80" ry="20" fill="url(#base-shading)"/>
-    </g>
-    <g class="lamp__post post">
-      <path class="post__body" d="M180 142h-30v286c0 3.866 6.716 7 15 7 8.284 0 15-3.134 15-7V142z"/>
-      <path d="M180 142h-30v286c0 3.866 6.716 7 15 7 8.284 0 15-3.134 15-7V142z" fill="url(#post-shading)"/>
-    </g>
+    <g class="lamp__shade shade"><ellipse class="shade__opening" cx="165" cy="220" rx="130" ry="20"/><ellipse class="shade__opening-shade" cx="165" cy="220" rx="130" ry="20" fill="url(#opening-shade)"/></g>
+    <g class="lamp__base base"><path class="base__side" d="M165 464c44.183 0 80-8.954 80-20v-14h-22.869c-14.519-3.703-34.752-6-57.131-6-22.379 0-42.612 2.297-57.131 6H85v14c0 11.046 35.817 20 80 20z"/><path d="M165 464c44.183 0 80-8.954 80-20v-14h-22.869c-14.519-3.703-34.752-6-57.131-6-22.379 0-42.612 2.297-57.131 6H85v14c0 11.046 35.817 20 80 20z" fill="url(#side-shading)"/><ellipse class="base__top" cx="165" cy="430" rx="80" ry="20"/><ellipse cx="165" cy="430" rx="80" ry="20" fill="url(#base-shading)"/></g>
+    <g class="lamp__post post"><path class="post__body" d="M180 142h-30v286c0 3.866 6.716 7 15 7 8.284 0 15-3.134 15-7V142z"/><path d="M180 142h-30v286c0 3.866 6.716 7 15 7 8.284 0 15-3.134 15-7V142z" fill="url(#post-shading)"/></g>
     <g class="lamp__cords cords">
       <path class="cord cord--rig" d="M124 187.033V347" stroke-width="6" stroke-linecap="round"/>
       <path class="cord cord--rig" d="M124 187.023s17.007 21.921 17.007 34.846c0 12.925-11.338 23.231-17.007 34.846-5.669 11.615-17.007 21.921-17.007 34.846 0 12.925 17.007 34.846 17.007 34.846" stroke-width="6" stroke-linecap="round"/>
@@ -43,128 +30,109 @@
       <line class="cord cord--dummy" x1="124" y2="348" x2="124" y1="190" stroke-width="6" stroke-linecap="round"/>
     </g>
     <path class="lamp__light" d="M290.5 193H39L0 463.5c0 11.046 75.478 20 165.5 20s167-11.954 167-23l-42-267.5z" fill="url(#light)"/>
-    <g class="lamp__top top">
-      <path class="top__body" fill-rule="evenodd" clip-rule="evenodd" d="M164.859 0c55.229 0 100 8.954 100 20l29.859 199.06C291.529 208.451 234.609 200 164.859 200S38.189 208.451 35 219.06L64.859 20c0-11.046 44.772-20 100-20z"/>
-      <path class="top__shading" fill-rule="evenodd" clip-rule="evenodd" d="M164.859 0c55.229 0 100 8.954 100 20l29.859 199.06C291.529 208.451 234.609 200 164.859 200S38.189 208.451 35 219.06L64.859 20c0-11.046 44.772-20 100-20z" fill="url(#top-shading)"/>
-    </g>
-    <g class="lamp__face face">
-      <g class="lamp__mouth">
-        <path d="M165 178c19.882 0 36-16.118 36-36h-72c0 19.882 16.118 36 36 36z" fill="#141414"/>
-        <clipPath class="lamp__feature" id="mouth" x="129" y="142" width="72" height="36">
-          <path d="M165 178c19.882 0 36-16.118 36-36h-72c0 19.882 16.118 36 36 36z" fill="#141414"/>
-        </clipPath>
-        <g clip-path="url(#mouth)">
-          <circle class="lamp__tongue" cx="179.4" cy="172.6" r="18"/>
-        </g>
-      </g>
-      <g class="lamp__eyes">
-        <path class="lamp__eye lamp__stroke" d="M115 135c0-5.523-5.82-10-13-10s-13 4.477-13 10" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-        <path class="lamp__eye lamp__stroke" d="M241 135c0-5.523-5.82-10-13-10s-13 4.477-13 10" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-      </g>
-    </g>
+    <g class="lamp__top top"><path class="top__body" fill-rule="evenodd" clip-rule="evenodd" d="M164.859 0c55.229 0 100 8.954 100 20l29.859 199.06C291.529 208.451 234.609 200 164.859 200S38.189 208.451 35 219.06L64.859 20c0-11.046 44.772-20 100-20z"/><path class="top__shading" fill-rule="evenodd" clip-rule="evenodd" d="M164.859 0c55.229 0 100 8.954 100 20l29.859 199.06C291.529 208.451 234.609 200 164.859 200S38.189 208.451 35 219.06L64.859 20c0-11.046 44.772-20 100-20z" fill="url(#top-shading)"/></g>
+    <g class="lamp__face face"><g class="lamp__mouth"><path d="M165 178c19.882 0 36-16.118 36-36h-72c0 19.882 16.118 36 36 36z" fill="#141414"/><clipPath class="lamp__feature" id="mouth" x="129" y="142" width="72" height="36"><path d="M165 178c19.882 0 36-16.118 36-36h-72c0 19.882 16.118 36 36 36z" fill="#141414"/></clipPath><g clip-path="url(#mouth)"><circle class="lamp__tongue" cx="179.4" cy="172.6" r="18"/></g></g><g class="lamp__eyes"><path class="lamp__eye lamp__stroke" d="M115 135c0-5.523-5.82-10-13-10s-13 4.477-13 10" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path class="lamp__eye lamp__stroke" d="M241 135c0-5.523-5.82-10-13-10s-13 4.477-13 10" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></g></g>
     <defs>
-      <linearGradient id="opening-shade" x1="35" y1="220" x2="295" y2="220" gradientUnits="userSpaceOnUse">
-        <stop/><stop offset="1" stop-color="var(--shade)" stop-opacity="0"/>
-      </linearGradient>
-      <linearGradient id="base-shading" x1="85" y1="444" x2="245" y2="444" gradientUnits="userSpaceOnUse">
-        <stop stop-color="var(--b-1)"/><stop offset="0.8" stop-color="var(--b-2)" stop-opacity="0"/>
-      </linearGradient>
-      <linearGradient id="side-shading" x1="119" y1="430" x2="245" y2="430" gradientUnits="userSpaceOnUse">
-        <stop stop-color="var(--b-3)"/><stop offset="1" stop-color="var(--b-4)" stop-opacity="0"/>
-      </linearGradient>
-      <linearGradient id="post-shading" x1="150" y1="288" x2="180" y2="288" gradientUnits="userSpaceOnUse">
-        <stop stop-color="var(--b-1)"/><stop offset="1" stop-color="var(--b-2)" stop-opacity="0"/>
-      </linearGradient>
-      <linearGradient id="light" x1="165.5" y1="218.5" x2="165.5" y2="483.5" gradientUnits="userSpaceOnUse">
-        <stop stop-color="var(--l-1)" stop-opacity=".2"/><stop offset="1" stop-color="var(--l-2)" stop-opacity="0"/>
-      </linearGradient>
-      <linearGradient id="top-shading" x1="56" y1="110" x2="295" y2="110" gradientUnits="userSpaceOnUse">
-        <stop stop-color="var(--t-1)" stop-opacity=".8"/><stop offset="1" stop-color="var(--t-2)" stop-opacity="0"/>
-      </linearGradient>
+      <linearGradient id="opening-shade" x1="35" y1="220" x2="295" y2="220" gradientUnits="userSpaceOnUse"><stop/><stop offset="1" stop-color="var(--shade)" stop-opacity="0"/></linearGradient>
+      <linearGradient id="base-shading" x1="85" y1="444" x2="245" y2="444" gradientUnits="userSpaceOnUse"><stop stop-color="var(--b-1)"/><stop offset=".8" stop-color="var(--b-2)" stop-opacity="0"/></linearGradient>
+      <linearGradient id="side-shading" x1="119" y1="430" x2="245" y2="430" gradientUnits="userSpaceOnUse"><stop stop-color="var(--b-3)"/><stop offset="1" stop-color="var(--b-4)" stop-opacity="0"/></linearGradient>
+      <linearGradient id="post-shading" x1="150" y1="288" x2="180" y2="288" gradientUnits="userSpaceOnUse"><stop stop-color="var(--b-1)"/><stop offset="1" stop-color="var(--b-2)" stop-opacity="0"/></linearGradient>
+      <linearGradient id="light" x1="165.5" y1="218.5" x2="165.5" y2="483.5" gradientUnits="userSpaceOnUse"><stop stop-color="var(--l-1)" stop-opacity=".2"/><stop offset="1" stop-color="var(--l-2)" stop-opacity="0"/></linearGradient>
+      <linearGradient id="top-shading" x1="56" y1="110" x2="295" y2="110" gradientUnits="userSpaceOnUse"><stop stop-color="var(--t-1)" stop-opacity=".8"/><stop offset="1" stop-color="var(--t-2)" stop-opacity="0"/></linearGradient>
     </defs>
     <circle class="lamp__hit" cx="124" cy="347" r="66" fill="#C4C4C4" fill-opacity=".1"/>
   </svg>
   </div>
 </form>
 
-<!-- ═══════════════════════════════════════════
-     CONTROL PANEL
-     ═══════════════════════════════════════════ -->
+<!-- ═══ CONTROL PANEL ═══ -->
 <div class="panel">
 
-  <!-- Row 1: Status + Swatches + Color Picker + Preview -->
-  <div class="panel-row">
+  <!-- Header -->
+  <div class="panel-header">
     <div class="status-dot"></div>
     <span class="status-text" id="statusText">OFF</span>
-    <div class="divider"></div>
-    <div class="swatches">
+    <span class="panel-title">Lamp Controller</span>
+    <span class="lock-badge unlocked" id="lockBadge">🔓 EDIT</span>
+    <div class="color-preview" id="colorPreview" style="background:rgb(255,180,220)"></div>
+  </div>
+
+  <!-- ── LIGHTING MODE (only when OFF) ── -->
+  <div class="panel-section section-unlocked" id="colorSection">
+    <div class="section-label"><span class="icon">🎨</span> Lighting Mode <span style="margin-left:auto;font-size:.45rem;opacity:.5">Pull cord OFF to edit</span></div>
+
+    <!-- Quick Swatches -->
+    <div class="swatch-row" id="swatchRow">
       <button type="button" class="swatch active" data-hue="320" data-r="255" data-g="180" data-b="220" style="background:#ffb4dc" title="Pink"></button>
       <button type="button" class="swatch" data-hue="45" data-r="255" data-g="220" data-b="100" style="background:#ffdc64" title="Warm"></button>
       <button type="button" class="swatch" data-hue="200" data-r="100" data-g="200" data-b="255" style="background:#64c8ff" title="Sky"></button>
       <button type="button" class="swatch" data-hue="280" data-r="180" data-g="130" data-b="255" style="background:#b482ff" title="Purple"></button>
       <button type="button" class="swatch" data-hue="140" data-r="100" data-g="255" data-b="160" style="background:#64ffa0" title="Mint"></button>
       <button type="button" class="swatch" data-hue="0" data-r="255" data-g="120" data-b="100" style="background:#ff7864" title="Coral"></button>
-      <button type="button" class="swatch" data-hue="30" data-r="255" data-g="180" data-b="80" style="background:#ffb450" title="Orange"></button>
-      <button type="button" class="swatch" data-hue="170" data-r="100" data-g="240" data-b="220" style="background:#64f0dc" title="Teal"></button>
+      <button type="button" class="swatch" data-hue="30" data-r="255" data-g="180" data-b="80" style="background:#ffb450" title="Amber"></button>
+      <button type="button" class="swatch" data-hue="60" data-r="255" data-g="255" data-b="220" style="background:#ffffdc" title="White"></button>
     </div>
-    <div class="divider"></div>
-    <div class="color-input-wrap">
-      <input type="color" class="custom-color" id="customColor" value="#ffb4dc" title="Pick custom color">
+
+    <!-- Multi-Color Stops -->
+    <div class="section-label" style="margin-top:4px"><span class="icon">🌈</span> Color Sequence</div>
+    <div class="stops-row" id="stopsRow">
+      <div class="stop-wrap"><input type="color" class="color-stop" value="#ff69b4"><button class="remove-stop" title="Remove">×</button></div>
+      <div class="stop-wrap"><input type="color" class="color-stop" value="#818cf8"><button class="remove-stop" title="Remove">×</button></div>
+      <button class="add-stop" id="addStopBtn" title="Add color stop">+</button>
     </div>
-    <div class="divider"></div>
-    <div class="color-preview" id="colorPreview" style="background:rgb(255,180,220)"></div>
+
+    <!-- Animation Mode -->
+    <div class="section-label"><span class="icon">⚡</span> Pattern</div>
+    <div class="mode-row" id="modeRow">
+      <button class="mode-pill active" data-mode="static">Static</button>
+      <button class="mode-pill" data-mode="flow">Flow</button>
+      <button class="mode-pill" data-mode="breathe">Breathe</button>
+      <button class="mode-pill" data-mode="beat">Beat</button>
+      <button class="mode-pill" data-mode="strobe">Strobe</button>
+      <button class="mode-pill" data-mode="wave">Wave</button>
+      <button class="mode-pill" data-mode="candle">Candle</button>
+      <button class="mode-pill" data-mode="glitch">Glitch</button>
+    </div>
+
+    <!-- Presets -->
+    <div class="section-label"><span class="icon">✨</span> Presets</div>
+    <div class="preset-row" id="presetRow">
+      <button class="preset-btn" data-preset="cyberpunk">Cyberpunk</button>
+      <button class="preset-btn" data-preset="sunset">Sunset</button>
+      <button class="preset-btn" data-preset="forest">Forest</button>
+      <button class="preset-btn" data-preset="ocean">Ocean</button>
+      <button class="preset-btn" data-preset="lavadream">Lava Dream</button>
+    </div>
+
+    <!-- RGB Sliders -->
+    <div class="section-label" style="margin-top:6px"><span class="icon">🎛️</span> Manual RGB</div>
+    <div class="slider-row">
+      <div class="slider-group"><label class="slider-label slider-label-r">R <span id="rVal">255</span></label><input type="range" class="slider-r" id="sliderR" min="0" max="255" value="255"></div>
+      <div class="slider-group"><label class="slider-label slider-label-g">G <span id="gVal">180</span></label><input type="range" class="slider-g" id="sliderG" min="0" max="255" value="180"></div>
+      <div class="slider-group"><label class="slider-label slider-label-b">B <span id="bVal">220</span></label><input type="range" class="slider-b" id="sliderB" min="0" max="255" value="220"></div>
+    </div>
   </div>
 
-  <!-- Row 2: RGB Sliders -->
-  <div class="panel-row">
-    <div class="panel-section" style="min-width:28px">RGB</div>
-    <div class="rgb-row">
-      <div class="rgb-group">
-        <label class="rgb-label rgb-label-r">R <span id="rVal">255</span></label>
-        <input type="range" class="slider-r" id="sliderR" min="0" max="255" value="255">
-      </div>
-      <div class="rgb-group">
-        <label class="rgb-label rgb-label-g">G <span id="gVal">180</span></label>
-        <input type="range" class="slider-g" id="sliderG" min="0" max="255" value="180">
-      </div>
-      <div class="rgb-group">
-        <label class="rgb-label rgb-label-b">B <span id="bVal">220</span></label>
-        <input type="range" class="slider-b" id="sliderB" min="0" max="255" value="220">
-      </div>
+  <!-- ── FX ADJUSTMENTS (only when ON) ── -->
+  <div class="panel-section fx-off" id="fxSection">
+    <div class="section-label"><span class="icon">🔆</span> Adjustments <span style="margin-left:auto;font-size:.45rem;opacity:.5">Active when lamp is ON</span></div>
+    <div class="slider-row">
+      <div class="slider-group"><label class="slider-label">Brightness <span id="brightVal">100%</span></label><input type="range" class="slider-fx" id="sliderBright" min="50" max="200" value="100"></div>
+      <div class="slider-group"><label class="slider-label">Contrast <span id="contrastVal">100%</span></label><input type="range" class="slider-fx" id="sliderContrast" min="50" max="200" value="100"></div>
     </div>
-  </div>
-
-  <!-- Row 3: Brightness, Contrast, Glow Spread, Glow Intensity -->
-  <div class="panel-row">
-    <div class="panel-section" style="min-width:28px">FX</div>
-    <div class="adjust-row" style="flex:1">
-      <div class="adjust-group">
-        <label class="adjust-label">Brightness <span id="brightVal">100%</span></label>
-        <input type="range" class="slider-adjust" id="sliderBright" min="50" max="200" value="100">
-      </div>
-      <div class="adjust-group">
-        <label class="adjust-label">Contrast <span id="contrastVal">100%</span></label>
-        <input type="range" class="slider-adjust" id="sliderContrast" min="50" max="200" value="100">
-      </div>
-      <div class="adjust-group">
-        <label class="adjust-label">Glow Size <span id="spreadVal">40</span></label>
-        <input type="range" class="slider-adjust" id="sliderSpread" min="5" max="100" value="40">
-      </div>
-      <div class="adjust-group">
-        <label class="adjust-label">Intensity <span id="intensityVal">35%</span></label>
-        <input type="range" class="slider-adjust" id="sliderIntensity" min="5" max="100" value="35">
-      </div>
+    <div class="slider-row" style="margin-top:6px">
+      <div class="slider-group"><label class="slider-label">Glow Size <span id="spreadVal">40</span></label><input type="range" class="slider-fx" id="sliderSpread" min="5" max="100" value="40"></div>
+      <div class="slider-group"><label class="slider-label">Intensity <span id="intensityVal">35%</span></label><input type="range" class="slider-fx" id="sliderIntensity" min="5" max="100" value="35"></div>
     </div>
   </div>
 
 </div>
 
-<div class="hint">Pull cord or press <kbd>Space</kbd> to toggle · Change settings while OFF</div>
+<div class="hint">Pull the cord or press <kbd>Space</kbd> to toggle power</div>
 
 <script src='https://unpkg.co/gsap@3/dist/gsap.min.js'></script>
 <script src='https://unpkg.com/gsap@3/dist/Draggable.min.js'></script>
 <script src='https://assets.codepen.io/16327/MorphSVGPlugin3.min.js'></script>
 <script src="./script.js"></script>
-
 </body>
 </html>
